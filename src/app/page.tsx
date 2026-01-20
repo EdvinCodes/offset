@@ -1,65 +1,77 @@
-import Image from "next/image";
+"use client";
+
+import { useTime } from "@/hooks/useTime";
+import ClockCard from "@/components/dashboard/ClockCard";
+import { Logo } from "@/components/ui/Logo"; // Importamos TU logo
+import { INITIAL_CITIES } from "@/data/cities";
+import { Plus } from "lucide-react";
 
 export default function Home() {
+  const now = useTime();
+  const heroCity = INITIAL_CITIES[0];
+  const otherCities = INITIAL_CITIES.slice(1, 3);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    // Fondo exacto #09090B (Background)
+    <main className="min-h-screen p-8 md:p-16 bg-[#09090B] font-sans selection:bg-[#6366F1] selection:text-white">
+      {/* Header con el Logo SVG Original */}
+      <header className="flex items-center justify-between mb-16 max-w-[1400px] mx-auto">
+        <div className="cursor-pointer hover:opacity-90 transition-opacity">
+          <Logo />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {/* Botón de configuración minimalista */}
+        <button className="w-12 h-12 rounded-full bg-[#18181B] border border-[#27272A] flex items-center justify-center text-[#A1A1AA] hover:text-white hover:border-[#6366F1] transition-colors group">
+          <svg
+            className="w-6 h-6 group-hover:rotate-90 transition-transform duration-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </svg>
+        </button>
+      </header>
+
+      {/* GRID BENTO */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8 max-w-[1400px] mx-auto">
+        {/* Reloj Principal (Hero) */}
+        <div className="col-span-1 md:col-span-2 md:row-span-2">
+          <ClockCard
+            city={heroCity.name}
+            country={heroCity.country}
+            timezone={heroCity.timezone}
+            now={now}
+            isHero={true}
+          />
         </div>
-      </main>
-    </div>
+
+        {/* Otras Ciudades */}
+        {otherCities.map((city) => (
+          <ClockCard
+            key={city.id}
+            city={city.name}
+            country={city.country}
+            timezone={city.timezone}
+            now={now}
+          />
+        ))}
+
+        {/* Card "Add City" - Estilo Wireframe Zinc */}
+        <div className="h-64 rounded-3xl border-2 border-dashed border-[#27272A] flex flex-col items-center justify-center text-[#A1A1AA] hover:text-[#6366F1] hover:border-[#6366F1] hover:bg-[#6366F1]/5 transition-all cursor-pointer group">
+          <div className="p-4 bg-[#18181B] rounded-full mb-4 group-hover:scale-110 transition-transform border border-[#27272A]">
+            <Plus className="w-8 h-8" />
+          </div>
+          <span className="text-sm font-bold tracking-widest uppercase">
+            Añadir Ciudad
+          </span>
+        </div>
+      </div>
+    </main>
   );
 }
