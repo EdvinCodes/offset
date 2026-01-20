@@ -3,7 +3,7 @@
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { es } from "date-fns/locale";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Trash2 } from "lucide-react";
 
 interface ClockCardProps {
   city: string;
@@ -11,6 +11,7 @@ interface ClockCardProps {
   timezone: string;
   now: Date | null;
   isHero?: boolean;
+  onDelete?: () => void; // Nueva prop opcional
 }
 
 export default function ClockCard({
@@ -19,8 +20,8 @@ export default function ClockCard({
   timezone,
   now,
   isHero = false,
+  onDelete,
 }: ClockCardProps) {
-  // Skeleton Loader con tus colores
   if (!now) {
     return (
       <div
@@ -45,7 +46,6 @@ export default function ClockCard({
 
   const offsetString =
     diff === 0 ? "Misma hora" : `${diff > 0 ? "+" : ""}${diff} HRS`;
-
   const hour = parseInt(format(zonedDate, "H"));
   const isDay = hour >= 6 && hour < 18;
 
@@ -53,13 +53,11 @@ export default function ClockCard({
     <div
       className={`
         relative overflow-hidden group transition-all duration-300
-        /* AQUI: Usamos EXACTAMENTE tus colores Zinc 900 (#18181B) y borde Zinc 800 (#27272A) */
         bg-[#18181B] border border-[#27272A] hover:border-[#6366F1]/50
         rounded-3xl p-8 flex flex-col justify-between
         ${isHero ? "col-span-1 md:col-span-2 shadow-2xl shadow-black/80 h-full" : "h-64 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#6366F1]/10"}
       `}
     >
-      {/* Efecto Glow Indigo solo al hacer hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#6366F1]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
       {/* Cabecera */}
@@ -82,11 +80,33 @@ export default function ClockCard({
           </p>
         </div>
 
-        {isDay ? (
-          <Sun className="w-6 h-6 text-amber-400" />
-        ) : (
-          <Moon className="w-6 h-6 text-[#6366F1]" />
-        )}
+        {/* LÓGICA DE ICONOS (SWAP) */}
+        <div className="relative w-8 h-8 flex justify-end">
+          {/* 1. Icono de borrar (Solo visible en hover si onDelete existe) */}
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="absolute inset-0 flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20 hover:scale-110"
+              title="Eliminar"
+            >
+              <Trash2 className="w-6 h-6" />
+            </button>
+          )}
+
+          {/* 2. Icono Sol/Luna (Desaparece en hover si hay botón borrar) */}
+          <div
+            className={`transition-opacity duration-200 ${onDelete ? "group-hover:opacity-0" : ""}`}
+          >
+            {isDay ? (
+              <Sun className="w-6 h-6 text-amber-400" />
+            ) : (
+              <Moon className="w-6 h-6 text-[#6366F1]" />
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Hora */}

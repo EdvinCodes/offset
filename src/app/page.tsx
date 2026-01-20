@@ -1,40 +1,61 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useTime } from "@/hooks/useTime";
 import ClockCard from "@/components/dashboard/ClockCard";
-import { Logo } from "@/components/ui/Logo"; // Importamos TU logo
-import { INITIAL_CITIES } from "@/data/cities";
-import { Plus } from "lucide-react";
+import SearchModal from "@/components/dashboard/SearchModal"; // Importar modal
+import { Logo } from "@/components/ui/Logo";
+import { INITIAL_CITIES, City } from "@/data/cities";
+import { useCityStore } from "@/store/useCityStore"; // Importar estado
+import { Plus } from "lucide-react"; // Icono de basura para borrar
 
 export default function Home() {
   const now = useTime();
-  const heroCity = INITIAL_CITIES[0];
-  const otherCities = INITIAL_CITIES.slice(1, 3);
+
+  // Estado local para el modal
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Estado global (ciudades guardadas)
+  const { savedCities, removeCity } = useCityStore();
+
+  // Estado para evitar problemas de hidratación con LocalStorage
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Estado del Hero (tu ubicación)
+  const [heroCity, setHeroCity] = useState<City>(INITIAL_CITIES[0]);
+
+  useEffect(() => {
+    setIsLoaded(true); // Marcamos que ya estamos en el cliente
+
+    const timer = setTimeout(() => {
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      let cityName =
+        userTimezone.split("/").pop()?.replace(/_/g, " ") || "Ubicación Local";
+      if (cityName === "Canary") cityName = "Islas Canarias";
+
+      if (userTimezone !== heroCity.timezone) {
+        setHeroCity({
+          id: "local-user",
+          name: cityName,
+          country: "Tu Ubicación",
+          timezone: userTimezone,
+        });
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    // Fondo exacto #09090B (Background)
     <main className="min-h-screen p-8 md:p-16 bg-[#09090B] font-sans selection:bg-[#6366F1] selection:text-white">
-      {/* Header con el Logo SVG Original */}
+      {/* Header */}
       <header className="flex items-center justify-between mb-16 max-w-[1400px] mx-auto">
         <div className="cursor-pointer hover:opacity-90 transition-opacity">
           <Logo />
         </div>
-
-        {/* Botón de configuración minimalista */}
-        <button className="w-12 h-12 rounded-full bg-[#18181B] border border-[#27272A] flex items-center justify-center text-[#A1A1AA] hover:text-white hover:border-[#6366F1] transition-colors group">
-          <svg
-            className="w-6 h-6 group-hover:rotate-90 transition-transform duration-500"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-            />
-          </svg>
+        <button className="w-12 h-12 rounded-full bg-[#18181B] border border-[#27272A] flex items-center justify-center text-[#A1A1AA] hover:text-white hover:border-[#6366F1] transition-colors">
+          <div className="w-6 h-6 bg-current rounded-full opacity-20" />{" "}
+          {/* Avatar placeholder */}
         </button>
       </header>
 
@@ -51,27 +72,39 @@ export default function Home() {
           />
         </div>
 
-        {/* Otras Ciudades */}
-        {otherCities.map((city) => (
-          <ClockCard
-            key={city.id}
-            city={city.name}
-            country={city.country}
-            timezone={city.timezone}
-            now={now}
-          />
-        ))}
+        {/* Ciudades Guardadas (Dinámicas) */}
+        {isLoaded &&
+          savedCities.map((city) => (
+            <ClockCard
+              key={city.id}
+              city={city.name}
+              country={city.country}
+              timezone={city.timezone}
+              now={now}
+              // Pasamos la función de borrado directamente al componente
+              onDelete={() => removeCity(city.id)}
+            />
+          ))}
 
-        {/* Card "Add City" - Estilo Wireframe Zinc */}
-        <div className="h-64 rounded-3xl border-2 border-dashed border-[#27272A] flex flex-col items-center justify-center text-[#A1A1AA] hover:text-[#6366F1] hover:border-[#6366F1] hover:bg-[#6366F1]/5 transition-all cursor-pointer group">
+        {/* Botón "+ Añadir" (Abre el Modal) */}
+        <button
+          onClick={() => setIsSearchOpen(true)}
+          className="h-64 rounded-3xl border-2 border-dashed border-[#27272A] flex flex-col items-center justify-center text-[#A1A1AA] hover:text-[#6366F1] hover:border-[#6366F1] hover:bg-[#6366F1]/5 transition-all cursor-pointer group w-full"
+        >
           <div className="p-4 bg-[#18181B] rounded-full mb-4 group-hover:scale-110 transition-transform border border-[#27272A]">
             <Plus className="w-8 h-8" />
           </div>
           <span className="text-sm font-bold tracking-widest uppercase">
             Añadir Ciudad
           </span>
-        </div>
+        </button>
       </div>
+
+      {/* Modal de Búsqueda */}
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+      />
     </main>
   );
 }
