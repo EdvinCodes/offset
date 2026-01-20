@@ -22,7 +22,7 @@ import ClockCard from "@/components/dashboard/ClockCard";
 import SearchModal from "@/components/dashboard/SearchModal";
 import SettingsModal from "@/components/dashboard/SettingsModal";
 import WorldMap from "@/components/dashboard/WorldMap";
-import { SortableItem } from "@/components/dashboard/SortableItem"; // IMPORTANTE
+import { SortableItem } from "@/components/dashboard/SortableItem";
 import { Logo } from "@/components/ui/Logo";
 import { INITIAL_CITIES, City } from "@/data/cities";
 import { AVAILABLE_CITIES } from "@/data/allCities";
@@ -31,23 +31,14 @@ import { Plus } from "lucide-react";
 
 export default function Home() {
   const now = useTime();
-
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-  // Traemos savedCities y la función de reordenar
   const { savedCities, removeCity, reorderCities } = useCityStore();
-
   const [isLoaded, setIsLoaded] = useState(false);
   const [heroCity, setHeroCity] = useState<City>(INITIAL_CITIES[0]);
 
-  // CONFIGURACIÓN DE SENSORES (Detectar ratón y táctil)
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8, // Hay que mover el ratón 8px para empezar a arrastrar (evita clicks accidentales)
-      },
-    }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
@@ -81,21 +72,18 @@ export default function Home() {
     ...AVAILABLE_CITIES.filter((c) => c.id !== heroCity.id),
   ];
 
-  // LÓGICA CUANDO SUELTAS EL ELEMENTO (Drag End)
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-
     if (over && active.id !== over.id) {
       const oldIndex = savedCities.findIndex((c) => c.id === active.id);
       const newIndex = savedCities.findIndex((c) => c.id === over.id);
-
-      // Reordenamos el array y guardamos en Zustand
       reorderCities(arrayMove(savedCities, oldIndex, newIndex));
     }
   }
 
   return (
-    <main className="min-h-screen p-4 sm:p-8 md:p-16 bg-[#09090B] font-sans selection:bg-[#6366F1] selection:text-white">
+    // CAMBIO IMPORTANTE: bg-zinc-50 (un gris casi blanco) en modo claro para que las tarjetas blancas resalten
+    <main className="min-h-screen p-4 sm:p-8 md:p-16 bg-zinc-50 dark:bg-[#09090B] font-sans transition-colors duration-300">
       {/* Header */}
       <header className="flex items-center justify-between mb-8 sm:mb-16 max-w-[1400px] mx-auto">
         <div className="cursor-pointer hover:opacity-90 transition-opacity">
@@ -104,7 +92,7 @@ export default function Home() {
 
         <button
           onClick={() => setIsSettingsOpen(true)}
-          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#18181B] border border-[#27272A] flex items-center justify-center text-[#A1A1AA] hover:text-white hover:border-[#6366F1] transition-colors group"
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-[#18181B] border border-zinc-200 dark:border-[#27272A] flex items-center justify-center text-zinc-500 dark:text-[#A1A1AA] hover:text-[#6366F1] dark:hover:text-white hover:border-[#6366F1] transition-colors group shadow-sm"
         >
           <svg
             className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-90 transition-transform duration-500"
@@ -122,19 +110,16 @@ export default function Home() {
         </button>
       </header>
 
-      {/* MAPA GLOBAL */}
       <div className="max-w-[1400px] mx-auto mb-8">
         <WorldMap cities={allMapPoints} />
       </div>
 
-      {/* CONTEXTO DE DRAG & DROP */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8 max-w-[1400px] mx-auto">
-          {/* El Hero NO es arrastrable, se queda fijo */}
           <div className="col-span-1 sm:col-span-2 xl:col-span-2 xl:row-span-2 h-full min-h-[250px]">
             <ClockCard
               city={heroCity.name}
@@ -145,16 +130,13 @@ export default function Home() {
             />
           </div>
 
-          {/* LISTA SORTABLE DE CIUDADES */}
           <SortableContext
             items={savedCities.map((c) => c.id)}
-            strategy={rectSortingStrategy} // Estrategia para Grid
+            strategy={rectSortingStrategy}
           >
             {isLoaded &&
               savedCities.map((city) => (
                 <SortableItem key={city.id} id={city.id}>
-                  {/* OJO: Pasamos dragHandleProps si quisiéramos un asa específica, 
-                    pero aquí toda la carta es arrastrable */}
                   <ClockCard
                     city={city.name}
                     country={city.country}
@@ -166,12 +148,11 @@ export default function Home() {
               ))}
           </SortableContext>
 
-          {/* Botón Añadir (Tampoco es arrastrable, siempre al final) */}
           <button
             onClick={() => setIsSearchOpen(true)}
-            className="h-64 rounded-3xl border-2 border-dashed border-[#27272A] flex flex-col items-center justify-center text-[#A1A1AA] hover:text-[#6366F1] hover:border-[#6366F1] hover:bg-[#6366F1]/5 transition-all cursor-pointer group w-full"
+            className="h-64 rounded-3xl border-2 border-dashed border-zinc-300 dark:border-[#27272A] flex flex-col items-center justify-center text-zinc-400 dark:text-[#A1A1AA] hover:text-[#6366F1] hover:border-[#6366F1] hover:bg-[#6366F1]/5 transition-all cursor-pointer group w-full"
           >
-            <div className="p-4 bg-[#18181B] rounded-full mb-4 group-hover:scale-110 transition-transform border border-[#27272A]">
+            <div className="p-4 bg-white dark:bg-[#18181B] rounded-full mb-4 group-hover:scale-110 transition-transform border border-zinc-200 dark:border-[#27272A] shadow-sm">
               <Plus className="w-8 h-8" />
             </div>
             <span className="text-xs sm:text-sm font-bold tracking-widest uppercase">

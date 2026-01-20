@@ -48,31 +48,31 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-2xl bg-[#18181B] border border-[#27272A] rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[70vh]">
+      <div className="relative w-full max-w-2xl bg-white dark:bg-[#18181B] border border-zinc-200 dark:border-[#27272A] rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[70vh]">
         {/* Header Fijo */}
-        <div className="flex items-center gap-4 p-4 border-b border-[#27272A] shrink-0">
-          <Search className="w-5 h-5 text-[#A1A1AA]" />
+        <div className="flex items-center gap-4 p-4 border-b border-zinc-200 dark:border-[#27272A] shrink-0">
+          <Search className="w-5 h-5 text-zinc-400 dark:text-[#A1A1AA]" />
           <input
             autoFocus
             type="text"
             placeholder="Buscar ciudad..."
-            className="flex-1 bg-transparent text-white placeholder-[#52525B] outline-none text-lg"
+            className="flex-1 bg-transparent text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-[#52525B] outline-none text-lg"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <button
             onClick={onClose}
-            className="p-1 hover:bg-[#27272A] rounded-md transition-colors"
+            className="p-1 hover:bg-zinc-100 dark:hover:bg-[#27272A] rounded-md transition-colors"
           >
-            <X className="w-5 h-5 text-[#A1A1AA]" />
+            <X className="w-5 h-5 text-zinc-400 dark:text-[#A1A1AA]" />
           </button>
         </div>
 
         {/* Lista con Scroll custom */}
         <div className="overflow-y-auto p-2 scrollbar-thin">
           {filteredCities.length === 0 ? (
-            <div className="p-8 text-center text-[#52525B]">
-              Sin resultados para "{searchTerm}"
+            <div className="p-8 text-center text-zinc-500 dark:text-[#52525B]">
+              {`Sin resultados para "${searchTerm}"`}
             </div>
           ) : (
             filteredCities.map((city) => {
@@ -82,18 +82,20 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   key={city.id}
                   disabled={isAlreadyAdded}
                   onClick={() => handleAdd(city)}
-                  className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-[#27272A] transition-colors group disabled:opacity-50 text-left"
+                  className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-zinc-100 dark:hover:bg-[#27272A] transition-colors group disabled:opacity-50 text-left"
                 >
                   <div>
-                    <h3 className="text-white font-medium group-hover:text-[#6366F1] transition-colors">
+                    <h3 className="text-zinc-900 dark:text-white font-medium group-hover:text-indigo-600 dark:group-hover:text-[#6366F1] transition-colors">
                       {city.name}
                     </h3>
-                    <p className="text-sm text-[#A1A1AA]">{city.country}</p>
+                    <p className="text-sm text-zinc-500 dark:text-[#A1A1AA]">
+                      {city.country}
+                    </p>
                   </div>
                   {isAlreadyAdded ? (
-                    <Check className="w-5 h-5 text-[#6366F1]" />
+                    <Check className="w-5 h-5 text-indigo-600 dark:text-[#6366F1]" />
                   ) : (
-                    <Plus className="w-5 h-5 text-[#52525B] group-hover:text-white" />
+                    <Plus className="w-5 h-5 text-zinc-400 dark:text-[#52525B] group-hover:text-zinc-900 dark:group-hover:text-white" />
                   )}
                 </button>
               );
@@ -101,9 +103,10 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
           )}
         </div>
 
-        <div className="p-3 bg-[#09090B] border-t border-[#27272A] text-xs text-[#52525B] text-center shrink-0">
+        {/* Footer */}
+        <div className="p-3 bg-zinc-50 dark:bg-[#09090B] border-t border-zinc-200 dark:border-[#27272A] text-xs text-zinc-500 dark:text-[#52525B] text-center shrink-0">
           Presiona{" "}
-          <kbd className="bg-[#27272A] px-1.5 py-0.5 rounded text-white font-mono">
+          <kbd className="bg-white dark:bg-[#27272A] border border-zinc-200 dark:border-transparent px-1.5 py-0.5 rounded text-zinc-600 dark:text-white font-mono shadow-sm">
             ESC
           </kbd>{" "}
           para cerrar

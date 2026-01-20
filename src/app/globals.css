@@ -1,9 +1,11 @@
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
 
-:root {
-  background-color: #09090b; /* Zinc 950 */
-  color: #fafafa; /* Zinc 50 */
-}
+/* BORRA O COMENTA ESTO si lo tenías fijo a oscuro */
+/* :root {
+   background-color: #09090b;
+   color: #fafafa;
+} */
 
 /* Opcional: para suavizar las fuentes en este fondo oscuro */
 body {

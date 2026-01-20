@@ -69,7 +69,6 @@ export default function WorldMap({ cities, className = "" }: WorldMapProps) {
     [projection],
   );
 
-  // Encontramos la ciudad activa fuera del renderizado para pintarla al final
   const activeCity = useMemo(() => {
     return cities.find((c) => c.id === hoverCityId);
   }, [cities, hoverCityId]);
@@ -78,7 +77,7 @@ export default function WorldMap({ cities, className = "" }: WorldMapProps) {
     return (
       <div
         id="map-container"
-        className={`w-full aspect-[2/1] bg-[#18181B] rounded-3xl animate-pulse ${className}`}
+        className={`w-full aspect-[2/1] bg-white dark:bg-[#18181B] rounded-3xl animate-pulse ${className}`}
       />
     );
 
@@ -88,7 +87,8 @@ export default function WorldMap({ cities, className = "" }: WorldMapProps) {
   return (
     <div
       id="map-container"
-      className={`relative w-full bg-[#18181B] border border-[#27272A] rounded-3xl overflow-hidden ${className}`}
+      // FONDO ADAPTABLE: Blanco vs Oscuro
+      className={`relative w-full bg-white dark:bg-[#18181B] border border-zinc-200 dark:border-[#27272A] rounded-3xl overflow-hidden ${className}`}
     >
       <svg
         width={dimensions.width}
@@ -101,10 +101,9 @@ export default function WorldMap({ cities, className = "" }: WorldMapProps) {
             <path
               key={`country-${i}`}
               d={pathGenerator(feature as d3.GeoPermissibleObjects) || ""}
-              fill="#27272A"
-              stroke="#09090B"
-              strokeWidth={0.5}
-              className="transition-colors hover:fill-[#3F3F46]"
+              // RELLENO ADAPTABLE: Zinc-200 (día) vs Zinc-800 (noche)
+              // Borde adaptable para que se vea sutil en ambos modos
+              className="fill-zinc-200 dark:fill-[#27272A] stroke-white dark:stroke-[#09090B] stroke-[0.5] transition-colors hover:fill-zinc-300 dark:hover:fill-[#3F3F46]"
             />
           ))}
         </g>
@@ -113,13 +112,13 @@ export default function WorldMap({ cities, className = "" }: WorldMapProps) {
         {nightPath && (
           <path
             d={nightPath}
-            fill="rgba(0,0,0,0.4)"
+            fill="rgba(0,0,0,0.4)" // Negro semitransparente siempre (la noche es oscura)
             style={{ pointerEvents: "none" }}
             className="blur-[2px]"
           />
         )}
 
-        {/* CAPA 3: PUNTOS DE CIUDADES (Sin Tooltips) */}
+        {/* CAPA 3: PUNTOS */}
         {cities.map((city) => {
           if (!city.lat || !city.lng) return null;
           const [x, y] = projection([city.lng, city.lat]) || [0, 0];
@@ -132,7 +131,6 @@ export default function WorldMap({ cities, className = "" }: WorldMapProps) {
               onMouseLeave={() => setHoverCityId(null)}
               style={{ cursor: "pointer" }}
             >
-              {/* Radar Effect */}
               {isHovered && (
                 <circle
                   cx={x}
@@ -142,11 +140,12 @@ export default function WorldMap({ cities, className = "" }: WorldMapProps) {
                   className="animate-ping"
                 />
               )}
-              {/* Punto Físico */}
+
               <circle
                 cx={x}
                 cy={y}
                 r={isHovered ? 8 : 4}
+                // Los puntos siguen siendo Indigo/Blanco para destacar bien
                 fill={isHovered ? "#FFFFFF" : "#6366F1"}
                 stroke="#09090B"
                 strokeWidth={2}
@@ -156,7 +155,7 @@ export default function WorldMap({ cities, className = "" }: WorldMapProps) {
           );
         })}
 
-        {/* CAPA 4: TOOLTIP ACTIVO (Renderizado AL FINAL para estar ENCIMA DE TODO) */}
+        {/* CAPA 4: TOOLTIP (Siempre oscuro estilo "Popover" para mejor contraste sobre mapa) */}
         {activeCity && activeCity.lat && activeCity.lng && (
           <g>
             {(() => {
@@ -166,15 +165,12 @@ export default function WorldMap({ cities, className = "" }: WorldMapProps) {
               const cityTime = toZonedTime(now, activeCity.timezone);
               const timeStr = format(cityTime, "HH:mm");
 
-              // Ajustes de diseño de la caja
-              const boxHeight = 44; // Más alta para que quepa todo
+              const boxHeight = 44;
               const textWidth = activeCity.name.length * 8 + 50;
-              const boxY = y - 35; // Posición vertical de la caja
+              const boxY = y - 35;
 
               return (
                 <g style={{ pointerEvents: "none" }}>
-                  {" "}
-                  {/* pointerEvents none evita flickering */}
                   <filter id="shadow">
                     <feDropShadow
                       dx="0"
@@ -184,7 +180,8 @@ export default function WorldMap({ cities, className = "" }: WorldMapProps) {
                       floodOpacity="0.5"
                     />
                   </filter>
-                  {/* Caja Tooltip */}
+
+                  {/* Tooltip mantiene estilo oscuro para que se lea siempre bien */}
                   <rect
                     x={x - textWidth / 2}
                     y={boxY - boxHeight}
@@ -196,10 +193,10 @@ export default function WorldMap({ cities, className = "" }: WorldMapProps) {
                     strokeWidth="1"
                     filter="url(#shadow)"
                   />
-                  {/* Texto Ciudad (Arriba) */}
+
                   <text
                     x={x}
-                    y={boxY - boxHeight + 18} // 18px desde arriba de la caja
+                    y={boxY - boxHeight + 18}
                     textAnchor="middle"
                     fill="#A1A1AA"
                     fontSize="11"
@@ -211,10 +208,10 @@ export default function WorldMap({ cities, className = "" }: WorldMapProps) {
                   >
                     {activeCity.name}
                   </text>
-                  {/* Texto Hora (Abajo) */}
+
                   <text
                     x={x}
-                    y={boxY - 10} // 10px desde abajo de la caja
+                    y={boxY - 10}
                     textAnchor="middle"
                     fill="#FFFFFF"
                     fontSize="15"
@@ -229,7 +226,8 @@ export default function WorldMap({ cities, className = "" }: WorldMapProps) {
         )}
       </svg>
 
-      <div className="absolute bottom-4 left-6 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/5 text-[10px] text-zinc-500 uppercase tracking-widest pointer-events-none">
+      {/* Etiqueta decorativa adaptable */}
+      <div className="absolute bottom-4 left-6 px-3 py-1 rounded-full bg-white/80 dark:bg-black/40 backdrop-blur-md border border-zinc-200 dark:border-white/5 text-[10px] text-zinc-600 dark:text-zinc-500 uppercase tracking-widest pointer-events-none">
         Live Satellite View
       </div>
     </div>

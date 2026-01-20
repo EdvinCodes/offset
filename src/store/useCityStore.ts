@@ -6,8 +6,9 @@ interface CityStore {
   savedCities: City[];
   addCity: (city: City) => void;
   removeCity: (cityId: string) => void;
-  // NUEVO: Función para reordenar
   reorderCities: (newOrder: City[]) => void;
+  // NUEVO: Función para restaurar backup completo
+  restoreBackup: (cities: City[]) => void;
 }
 
 export const useCityStore = create<CityStore>()(
@@ -26,10 +27,15 @@ export const useCityStore = create<CityStore>()(
           savedCities: state.savedCities.filter((c) => c.id !== cityId),
         })),
 
-      // Implementación simple: recibimos el array ya ordenado y lo guardamos
       reorderCities: (newOrder) =>
         set(() => ({
           savedCities: newOrder,
+        })),
+
+      // Simplemente reemplaza el estado actual con el backup
+      restoreBackup: (cities) =>
+        set(() => ({
+          savedCities: cities,
         })),
     }),
     {
