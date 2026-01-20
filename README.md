@@ -28,7 +28,7 @@
 First, clone the repository:
 
 ```bash
-git clone [https://github.com/EdvinCodes/offset.git](https://github.com/EdvinCodes/offset.git)
+git clone https://github.com/EdvinCodes/offset.git
 cd offset
 
 ```
