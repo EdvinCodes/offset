@@ -5,8 +5,10 @@ import { useTime } from "@/hooks/useTime";
 import ClockCard from "@/components/dashboard/ClockCard";
 import SearchModal from "@/components/dashboard/SearchModal";
 import SettingsModal from "@/components/dashboard/SettingsModal";
+import WorldMap from "@/components/dashboard/WorldMap";
 import { Logo } from "@/components/ui/Logo";
 import { INITIAL_CITIES, City } from "@/data/cities";
+import { AVAILABLE_CITIES } from "@/data/allCities";
 import { useCityStore } from "@/store/useCityStore";
 import { Plus } from "lucide-react";
 
@@ -33,12 +35,21 @@ export default function Home() {
           name: cityName,
           country: "Tu Ubicación",
           timezone: userTimezone,
+          lat: 28.0, // Coordenadas aprox para que salga tu punto (parche temporal)
+          lng: -16.0,
         });
       }
     }, 0);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Preparamos TODAS las ciudades para el Mapa (Combinamos disponibles + tu ubicación)
+  // Filtramos para no duplicar si tu ubicación ya está en la lista
+  const allMapPoints = [
+    heroCity,
+    ...AVAILABLE_CITIES.filter((c) => c.id !== heroCity.id),
+  ];
 
   return (
     <main className="min-h-screen p-4 sm:p-8 md:p-16 bg-[#09090B] font-sans selection:bg-[#6366F1] selection:text-white">
@@ -67,6 +78,11 @@ export default function Home() {
           </svg>
         </button>
       </header>
+
+      {/* MAPA GLOBAL (Usamos la lista enriquecida mapCities) */}
+      <div className="max-w-[1400px] mx-auto mb-8">
+        <WorldMap cities={allMapPoints} />
+      </div>
 
       {/* GRID BENTO RE-AJUSTADO */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8 max-w-[1400px] mx-auto">
