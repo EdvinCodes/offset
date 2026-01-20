@@ -10,7 +10,7 @@ import { getNightPath } from "@/lib/solar";
 import { City } from "@/data/cities";
 import { useTime } from "@/hooks/useTime";
 import { toZonedTime, format } from "date-fns-tz";
-import { Plus, Minus, RotateCcw } from "lucide-react"; // Iconos para los controles
+import { Plus, Minus, RotateCcw } from "lucide-react";
 
 interface WorldFeature {
   type: "Feature";
@@ -40,8 +40,8 @@ export default function WorldMap({
   const [worldData, setWorldData] = useState<WorldData | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 400 });
   const [hoverCityId, setHoverCityId] = useState<string | null>(null);
+  const [currentK, setCurrentK] = useState(1); // Mantenemos el nivel de zoom actual
 
-  // Referencias para D3 Zoom
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
   const zoomBehavior = useRef<d3Zoom.ZoomBehavior<
@@ -65,7 +65,7 @@ export default function WorldMap({
       if (container) {
         setDimensions({
           width: container.clientWidth,
-          height: container.clientWidth * 0.5, // Aspect ratio 2:1
+          height: container.clientWidth * 0.5,
         });
       }
     };
@@ -75,7 +75,6 @@ export default function WorldMap({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // --- CONFIGURACIÓN DEL ZOOM ---
   useEffect(() => {
     if (!svgRef.current || !gRef.current) return;
 
@@ -84,20 +83,20 @@ export default function WorldMap({
 
     const zoom = d3Zoom
       .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([1, 8]) // Min zoom 1x, Max zoom 8x
+      .scaleExtent([1, 8])
       .translateExtent([
         [0, 0],
         [dimensions.width, dimensions.height],
-      ]) // No salir del mapa
+      ])
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
+        setCurrentK(event.transform.k); // Actualizamos K al hacer zoom
       });
 
     zoomBehavior.current = zoom;
     svg.call(zoom);
-  }, [dimensions]); // Reinicializar si cambia el tamaño
+  }, [dimensions]);
 
-  // --- CONTROLES MANUALES ---
   const handleZoomIn = () => {
     if (svgRef.current && zoomBehavior.current) {
       d3Selection
@@ -127,7 +126,6 @@ export default function WorldMap({
         .call(zoomBehavior.current.transform, d3Zoom.zoomIdentity);
     }
   };
-  // ---------------------------
 
   const projection = useMemo(() => {
     const sphere: d3.GeoSphere = { type: "Sphere" };
@@ -166,24 +164,20 @@ export default function WorldMap({
         ref={svgRef}
         width={dimensions.width}
         height={dimensions.height}
-        className="block cursor-grab active:cursor-grabbing touch-none" // touch-none evita scroll en móviles al tocar el mapa
+        className="block cursor-grab active:cursor-grabbing touch-none"
       >
-        {/* GRUPO PRINCIPAL QUE RECIBE EL ZOOM */}
         <g ref={gRef}>
-          {/* CAPA 1: PAÍSES */}
           <g>
             {worldData.features.map((feature, i) => (
               <path
                 key={`country-${i}`}
                 d={pathGenerator(feature as d3.GeoPermissibleObjects) || ""}
                 className="fill-zinc-300 dark:fill-[#27272A] stroke-white dark:stroke-[#09090B] stroke-[0.5] transition-colors hover:fill-zinc-400 dark:hover:fill-[#3F3F46]"
-                // vector-effect mantiene el borde fino aunque hagas zoom
                 vectorEffect="non-scaling-stroke"
               />
             ))}
           </g>
 
-          {/* CAPA 2: NOCHE */}
           {nightPath && (
             <path
               d={nightPath}
@@ -193,7 +187,7 @@ export default function WorldMap({
             />
           )}
 
-          {/* CAPA 3: PUNTOS */}
+          {/* CAPA 3: PUNTOS (Ajustamos radio y stroke con currentK) */}
           {cities.map((city) => {
             if (!city.lat || !city.lng) return null;
             const [x, y] = projection([city.lng, city.lat]) || [0, 0];
@@ -206,26 +200,24 @@ export default function WorldMap({
                 onMouseLeave={() => setHoverCityId(null)}
                 style={{ cursor: "pointer" }}
               >
-                {/* Ping Animation */}
                 {isHovered && (
                   <circle
                     cx={x}
                     cy={y}
-                    r={18 / 1} // Podríamos dividir por scale k si quisiéramos mantener tamaño
+                    r={18 / currentK}
                     fill="rgba(99, 102, 241, 0.3)"
                     className="animate-ping"
                     vectorEffect="non-scaling-stroke"
                   />
                 )}
 
-                {/* Punto Real */}
                 <circle
                   cx={x}
                   cy={y}
-                  r={isHovered ? 8 : 4} // Radio fijo, crecerá con el zoom (feature deseada para ver mejor zonas densas)
+                  r={(isHovered ? 8 : 4) / Math.sqrt(currentK)}
                   fill={isHovered ? "#FFFFFF" : "#6366F1"}
                   stroke={isHovered ? "#000" : "#FFFFFF"}
-                  strokeWidth={isHovered ? 2 : 1}
+                  strokeWidth={(isHovered ? 2 : 1) / currentK}
                   className="transition-all duration-300 drop-shadow-md"
                   vectorEffect="non-scaling-stroke"
                 />
@@ -233,7 +225,7 @@ export default function WorldMap({
             );
           })}
 
-          {/* CAPA 4: TOOLTIP (DENTRO DEL GRUPO DE ZOOM PARA QUE SE MUEVA CON EL MAPA) */}
+          {/* CAPA 4: TOOLTIP (Escala inversa 1/currentK) */}
           {activeCity && activeCity.lat && activeCity.lng && (
             <g>
               {(() => {
@@ -244,12 +236,13 @@ export default function WorldMap({
                 const timeStr = format(cityTime, "HH:mm");
                 const boxHeight = 44;
                 const textWidth = activeCity.name.length * 8 + 50;
-                // Escalamos inversamente el tooltip si quisiéramos que mantenga tamaño,
-                // pero por ahora dejar que haga zoom es más natural.
-                const boxY = y - 35;
+                const boxY = y - 35 / currentK;
 
                 return (
-                  <g style={{ pointerEvents: "none" }}>
+                  <g
+                    style={{ pointerEvents: "none" }}
+                    transform={`translate(${x}, ${boxY}) scale(${1 / currentK})`}
+                  >
                     <filter id="shadow">
                       <feDropShadow
                         dx="0"
@@ -260,8 +253,8 @@ export default function WorldMap({
                       />
                     </filter>
                     <rect
-                      x={x - textWidth / 2}
-                      y={boxY - boxHeight}
+                      x={-textWidth / 2}
+                      y={-boxHeight}
                       width={textWidth}
                       height={boxHeight}
                       rx="8"
@@ -269,11 +262,9 @@ export default function WorldMap({
                       stroke="#3F3F46"
                       strokeWidth="1"
                       filter="url(#shadow)"
-                      vectorEffect="non-scaling-stroke"
                     />
                     <text
-                      x={x}
-                      y={boxY - boxHeight + 18}
+                      y={-boxHeight + 18}
                       textAnchor="middle"
                       fill="#A1A1AA"
                       fontSize="11"
@@ -286,8 +277,7 @@ export default function WorldMap({
                       {activeCity.name}
                     </text>
                     <text
-                      x={x}
-                      y={boxY - 10}
+                      y={-10}
                       textAnchor="middle"
                       fill="#FFFFFF"
                       fontSize="15"
@@ -300,11 +290,9 @@ export default function WorldMap({
               })()}
             </g>
           )}
-        </g>{" "}
-        {/* FIN GRUPO ZOOM */}
+        </g>
       </svg>
 
-      {/* --- BOTONES DE CONTROL DE ZOOM --- */}
       <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <button
           onClick={handleZoomIn}
@@ -326,7 +314,6 @@ export default function WorldMap({
         </button>
       </div>
 
-      {/* Etiqueta decorativa */}
       <div className="absolute bottom-4 left-6 px-3 py-1 rounded-full bg-white/80 dark:bg-black/40 backdrop-blur-md border border-zinc-200 dark:border-white/5 text-[10px] text-zinc-600 dark:text-zinc-500 uppercase tracking-widest pointer-events-none">
         Interactive Map
       </div>
