@@ -22,10 +22,17 @@ interface WorldData {
 interface WorldMapProps {
   cities: City[];
   className?: string;
+  time?: Date | null;
 }
 
-export default function WorldMap({ cities, className = "" }: WorldMapProps) {
-  const now = useTime();
+export default function WorldMap({
+  cities,
+  className = "",
+  time,
+}: WorldMapProps) {
+  const internalTime = useTime();
+  const now = time || internalTime;
+
   const [worldData, setWorldData] = useState<WorldData | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 400 });
   const [hoverCityId, setHoverCityId] = useState<string | null>(null);

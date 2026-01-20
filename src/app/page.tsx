@@ -22,6 +22,7 @@ import ClockCard from "@/components/dashboard/ClockCard";
 import SearchModal from "@/components/dashboard/SearchModal";
 import SettingsModal from "@/components/dashboard/SettingsModal";
 import WorldMap from "@/components/dashboard/WorldMap";
+import { TimeSlider } from "@/components/dashboard/TimeSlider";
 import { SortableItem } from "@/components/dashboard/SortableItem";
 import { Logo } from "@/components/ui/Logo";
 import { INITIAL_CITIES, City } from "@/data/cities";
@@ -30,12 +31,19 @@ import { useCityStore } from "@/store/useCityStore";
 import { Plus } from "lucide-react";
 
 export default function Home() {
-  const now = useTime();
+  const realTime = useTime();
+  const [timeOffset, setTimeOffset] = useState(0);
+
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { savedCities, removeCity, reorderCities } = useCityStore();
   const [isLoaded, setIsLoaded] = useState(false);
   const [heroCity, setHeroCity] = useState<City>(INITIAL_CITIES[0]);
+
+  // CALCULAR EL TIEMPO SIMULADO
+  const simulatedTime = realTime
+    ? new Date(realTime.getTime() + timeOffset * 60 * 1000)
+    : null;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -45,8 +53,10 @@ export default function Home() {
   );
 
   useEffect(() => {
-    setIsLoaded(true);
+    // FIX: Movemos setIsLoaded DENTRO del timeout para evitar el error de renderizado síncrono
     const timer = setTimeout(() => {
+      setIsLoaded(true); // <--- AHORA ESTÁ AQUÍ, DENTRO DEL TIMEOUT
+
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       let cityName =
         userTimezone.split("/").pop()?.replace(/_/g, " ") || "Ubicación Local";
@@ -82,8 +92,7 @@ export default function Home() {
   }
 
   return (
-    // CAMBIO IMPORTANTE: bg-zinc-50 (un gris casi blanco) en modo claro para que las tarjetas blancas resalten
-    <main className="min-h-screen p-4 sm:p-8 md:p-16 bg-zinc-50 dark:bg-[#09090B] font-sans transition-colors duration-300">
+    <main className="min-h-screen p-4 sm:p-8 md:p-16 bg-zinc-50 dark:bg-[#09090B] font-sans transition-colors duration-300 pb-32">
       {/* Header */}
       <header className="flex items-center justify-between mb-8 sm:mb-16 max-w-[1400px] mx-auto">
         <div className="cursor-pointer hover:opacity-90 transition-opacity">
@@ -111,7 +120,8 @@ export default function Home() {
       </header>
 
       <div className="max-w-[1400px] mx-auto mb-8">
-        <WorldMap cities={allMapPoints} />
+        {/* Pasamos simulatedTime al mapa para que mueva el sol */}
+        <WorldMap cities={allMapPoints} time={simulatedTime} />
       </div>
 
       <DndContext
@@ -125,7 +135,7 @@ export default function Home() {
               city={heroCity.name}
               country={heroCity.country}
               timezone={heroCity.timezone}
-              now={now}
+              now={simulatedTime}
               isHero={true}
             />
           </div>
@@ -141,7 +151,7 @@ export default function Home() {
                     city={city.name}
                     country={city.country}
                     timezone={city.timezone}
-                    now={now}
+                    now={simulatedTime}
                     onDelete={() => removeCity(city.id)}
                   />
                 </SortableItem>
@@ -161,6 +171,13 @@ export default function Home() {
           </button>
         </div>
       </DndContext>
+
+      {/* COMPONENTE SLIDER FLOTANTE */}
+      <TimeSlider
+        offsetMinutes={timeOffset}
+        onChange={setTimeOffset}
+        onReset={() => setTimeOffset(0)}
+      />
 
       <SearchModal
         isOpen={isSearchOpen}
