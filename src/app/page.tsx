@@ -1,11 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+
 import { useTime } from "@/hooks/useTime";
 import ClockCard from "@/components/dashboard/ClockCard";
 import SearchModal from "@/components/dashboard/SearchModal";
 import SettingsModal from "@/components/dashboard/SettingsModal";
 import WorldMap from "@/components/dashboard/WorldMap";
+import { SortableItem } from "@/components/dashboard/SortableItem"; // IMPORTANTE
 import { Logo } from "@/components/ui/Logo";
 import { INITIAL_CITIES, City } from "@/data/cities";
 import { AVAILABLE_CITIES } from "@/data/allCities";
@@ -17,9 +34,24 @@ export default function Home() {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const { savedCities, removeCity } = useCityStore();
+
+  // Traemos savedCities y la función de reordenar
+  const { savedCities, removeCity, reorderCities } = useCityStore();
+
   const [isLoaded, setIsLoaded] = useState(false);
   const [heroCity, setHeroCity] = useState<City>(INITIAL_CITIES[0]);
+
+  // CONFIGURACIÓN DE SENSORES (Detectar ratón y táctil)
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Hay que mover el ratón 8px para empezar a arrastrar (evita clicks accidentales)
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   useEffect(() => {
     setIsLoaded(true);
@@ -35,7 +67,7 @@ export default function Home() {
           name: cityName,
           country: "Tu Ubicación",
           timezone: userTimezone,
-          lat: 28.0, // Coordenadas aprox para que salga tu punto (parche temporal)
+          lat: 28.0,
           lng: -16.0,
         });
       }
@@ -44,12 +76,23 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Preparamos TODAS las ciudades para el Mapa (Combinamos disponibles + tu ubicación)
-  // Filtramos para no duplicar si tu ubicación ya está en la lista
   const allMapPoints = [
     heroCity,
     ...AVAILABLE_CITIES.filter((c) => c.id !== heroCity.id),
   ];
+
+  // LÓGICA CUANDO SUELTAS EL ELEMENTO (Drag End)
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = savedCities.findIndex((c) => c.id === active.id);
+      const newIndex = savedCities.findIndex((c) => c.id === over.id);
+
+      // Reordenamos el array y guardamos en Zustand
+      reorderCities(arrayMove(savedCities, oldIndex, newIndex));
+    }
+  }
 
   return (
     <main className="min-h-screen p-4 sm:p-8 md:p-16 bg-[#09090B] font-sans selection:bg-[#6366F1] selection:text-white">
@@ -79,60 +122,69 @@ export default function Home() {
         </button>
       </header>
 
-      {/* MAPA GLOBAL (Usamos la lista enriquecida mapCities) */}
+      {/* MAPA GLOBAL */}
       <div className="max-w-[1400px] mx-auto mb-8">
         <WorldMap cities={allMapPoints} />
       </div>
 
-      {/* GRID BENTO RE-AJUSTADO */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8 max-w-[1400px] mx-auto">
-        {/* Reloj Principal (Hero) 
-            - Móvil: 1 columna
-            - Tablet (sm): 2 columnas (ocupa todo el ancho de la fila)
-            - Escritorio (xl): 2 columnas de ancho x 2 filas de alto (Bento)
-        */}
-        <div className="col-span-1 sm:col-span-2 xl:col-span-2 xl:row-span-2 h-full min-h-[250px]">
-          <ClockCard
-            city={heroCity.name}
-            country={heroCity.country}
-            timezone={heroCity.timezone}
-            now={now}
-            isHero={true}
-          />
-        </div>
-
-        {/* Ciudades Guardadas */}
-        {isLoaded &&
-          savedCities.map((city) => (
+      {/* CONTEXTO DE DRAG & DROP */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8 max-w-[1400px] mx-auto">
+          {/* El Hero NO es arrastrable, se queda fijo */}
+          <div className="col-span-1 sm:col-span-2 xl:col-span-2 xl:row-span-2 h-full min-h-[250px]">
             <ClockCard
-              key={city.id}
-              city={city.name}
-              country={city.country}
-              timezone={city.timezone}
+              city={heroCity.name}
+              country={heroCity.country}
+              timezone={heroCity.timezone}
               now={now}
-              onDelete={() => removeCity(city.id)}
+              isHero={true}
             />
-          ))}
-
-        {/* Card Add City */}
-        <button
-          onClick={() => setIsSearchOpen(true)}
-          className="h-64 rounded-3xl border-2 border-dashed border-[#27272A] flex flex-col items-center justify-center text-[#A1A1AA] hover:text-[#6366F1] hover:border-[#6366F1] hover:bg-[#6366F1]/5 transition-all cursor-pointer group w-full"
-        >
-          <div className="p-4 bg-[#18181B] rounded-full mb-4 group-hover:scale-110 transition-transform border border-[#27272A]">
-            <Plus className="w-8 h-8" />
           </div>
-          <span className="text-xs sm:text-sm font-bold tracking-widest uppercase">
-            Añadir Ciudad
-          </span>
-        </button>
-      </div>
+
+          {/* LISTA SORTABLE DE CIUDADES */}
+          <SortableContext
+            items={savedCities.map((c) => c.id)}
+            strategy={rectSortingStrategy} // Estrategia para Grid
+          >
+            {isLoaded &&
+              savedCities.map((city) => (
+                <SortableItem key={city.id} id={city.id}>
+                  {/* OJO: Pasamos dragHandleProps si quisiéramos un asa específica, 
+                    pero aquí toda la carta es arrastrable */}
+                  <ClockCard
+                    city={city.name}
+                    country={city.country}
+                    timezone={city.timezone}
+                    now={now}
+                    onDelete={() => removeCity(city.id)}
+                  />
+                </SortableItem>
+              ))}
+          </SortableContext>
+
+          {/* Botón Añadir (Tampoco es arrastrable, siempre al final) */}
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="h-64 rounded-3xl border-2 border-dashed border-[#27272A] flex flex-col items-center justify-center text-[#A1A1AA] hover:text-[#6366F1] hover:border-[#6366F1] hover:bg-[#6366F1]/5 transition-all cursor-pointer group w-full"
+          >
+            <div className="p-4 bg-[#18181B] rounded-full mb-4 group-hover:scale-110 transition-transform border border-[#27272A]">
+              <Plus className="w-8 h-8" />
+            </div>
+            <span className="text-xs sm:text-sm font-bold tracking-widest uppercase">
+              Añadir Ciudad
+            </span>
+          </button>
+        </div>
+      </DndContext>
 
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
       />
-
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}

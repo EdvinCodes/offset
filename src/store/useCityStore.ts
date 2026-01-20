@@ -6,17 +6,17 @@ interface CityStore {
   savedCities: City[];
   addCity: (city: City) => void;
   removeCity: (cityId: string) => void;
+  // NUEVO: Función para reordenar
+  reorderCities: (newOrder: City[]) => void;
 }
 
 export const useCityStore = create<CityStore>()(
   persist(
     (set) => ({
-      // Empezamos vacíos (o podrías poner New York por defecto)
       savedCities: [],
 
       addCity: (city) =>
         set((state) => {
-          // Evitar duplicados
           if (state.savedCities.find((c) => c.id === city.id)) return state;
           return { savedCities: [...state.savedCities, city] };
         }),
@@ -25,9 +25,15 @@ export const useCityStore = create<CityStore>()(
         set((state) => ({
           savedCities: state.savedCities.filter((c) => c.id !== cityId),
         })),
+
+      // Implementación simple: recibimos el array ya ordenado y lo guardamos
+      reorderCities: (newOrder) =>
+        set(() => ({
+          savedCities: newOrder,
+        })),
     }),
     {
-      name: "offset-storage", // Nombre clave para localStorage
+      name: "offset-storage",
     },
   ),
 );
