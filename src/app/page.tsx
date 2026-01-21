@@ -40,7 +40,7 @@ import { parseShareUrl } from "@/lib/share";
 import { useTranslation } from "@/hooks/useTranslation";
 
 export default function Home() {
-  const { t } = useTranslation(); // Inicializamos el hook
+  const { t, language } = useTranslation(); // Inicializamos el hook
 
   const realTime = useTime();
   const [timeOffset, setTimeOffset] = useState(0);
@@ -105,27 +105,40 @@ export default function Home() {
     const initLocation = async () => {
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-      // 1. CACHÉ
+      // 1. LEER CACHÉ
       const cached = localStorage.getItem("user_hero_location");
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
-          // Si cargamos de caché, tal vez queramos actualizar el nombre traducido
-          // pero por simplicidad usamos el guardado.
-          // Opcional: Podríamos sobrescribir el nombre aquí con t.localLocation si es el ID "local-user"
+
+          // Si el ID es local-user y tiene un nombre "real" (no genérico), lo usamos
+          // Pero NO confiamos en el nombre guardado para las etiquetas genéricas
           if (parsed.id === "local-user") {
-            parsed.name = t.localLocation;
-            parsed.country = t.yourLocation;
+            // Si el nombre guardado coincide con alguna traducción de "Ubicación Local",
+            // forzamos que use la traducción actual de 't'.
+            const isGeneric = [
+              "Ubicación Local",
+              "Local Location",
+              "Emplacement local",
+              "Lokaler Standort",
+            ].includes(parsed.name);
+
+            if (isGeneric) {
+              parsed.name = t.localLocation;
+              parsed.country = t.yourLocation;
+            }
           }
+
           setHeroCity(parsed);
           setIsLoaded(true);
-          return;
+          // Si el nombre es real (ej: "Las Palmas"), no hace falta seguir buscando
+          if (parsed.name !== t.localLocation) return;
         } catch {
           localStorage.removeItem("user_hero_location");
         }
       }
 
-      // 2. API
+      // 2. BUSCAR POR API (ipwho.is)
       try {
         const ipRes = await fetch("https://ipwho.is/");
         const ipData = await ipRes.json();
@@ -133,8 +146,8 @@ export default function Home() {
         if (ipData.success) {
           const newHero = {
             id: "local-user",
-            name: ipData.city || t.localLocation, // Fallback traducido
-            country: ipData.country || t.yourLocation, // Fallback traducido
+            name: ipData.city, // Guardamos el nombre REAL de la ciudad
+            country: ipData.country,
             timezone: userTimezone,
             lat: ipData.latitude,
             lng: ipData.longitude,
@@ -155,7 +168,7 @@ export default function Home() {
       if (cityQuery) {
         try {
           const response = await fetch(
-            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityQuery)}&count=1&language=es&format=json`,
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityQuery)}&count=1&language=${language}&format=json`,
           );
           const data = await response.json();
           if (data.results?.[0]) {
@@ -163,7 +176,7 @@ export default function Home() {
             const fallbackHero = {
               id: "local-user",
               name: r.name,
-              country: r.country || t.yourLocation,
+              country: r.country,
               timezone: userTimezone,
               lat: r.latitude,
               lng: r.longitude,
@@ -174,29 +187,31 @@ export default function Home() {
               "user_hero_location",
               JSON.stringify(fallbackHero),
             );
+            setIsLoaded(true);
+            return;
           }
         } catch (e) {
           console.error(e);
         }
       }
 
-      // 4. ÚLTIMO RECURSO SI TODO FALLA
-      if (!heroCity.lat) {
-        // Si no hemos setteado nada aún
-        setHeroCity((prev) => ({
-          ...prev,
-          name: t.localLocation,
-          country: t.yourLocation,
-        }));
-      }
-
+      // 4. SI TODO FALLA: Solo aquí usamos los textos genéricos, pero SIN GUARDARLOS en localStorage
+      // para que la próxima vez vuelva a intentar buscar la ciudad real.
+      setHeroCity({
+        id: "local-user",
+        name: t.localLocation,
+        country: t.yourLocation,
+        timezone: userTimezone,
+        lat: 0,
+        lng: 0,
+        countryCode: "UN",
+      });
       setIsLoaded(true);
     };
 
     const timer = setTimeout(initLocation, 0);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t]); // Dependencia 't' para refrescar si cambia el idioma (aunque requeriría recarga completa del efecto)
+  }, [t, language]); // Escuchamos cambios de idioma
 
   const allMapPoints = [
     heroCity,
@@ -285,36 +300,66 @@ export default function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8 max-w-[1400px] mx-auto">
           {/* HERO CARD */}
           <div className="col-span-1 sm:col-span-2 xl:col-span-2 xl:row-span-2 h-full min-h-[250px]">
-            <ClockCard
-              city={heroCity.name}
-              country={heroCity.country}
-              timezone={heroCity.timezone}
-              now={simulatedTime}
-              lat={heroCity.lat}
-              lng={heroCity.lng}
-              countryCode={heroCity.countryCode}
-              isHero={true}
-            />
+            {/* Lógica para traducir también la Hero City si coincide con nuestra base de datos */}
+            {(() => {
+              const staticHero = AVAILABLE_CITIES.find(
+                (c) => c.name === heroCity.name,
+              );
+              const heroNameSource = staticHero?.names || heroCity.names;
+              // Truco: si no hay traducción, usa heroCity.name
+              const displayHeroName =
+                (heroNameSource as Record<string, string>)?.[language] ||
+                heroCity.name;
+
+              return (
+                <ClockCard
+                  city={displayHeroName} // <--- USAR EL NOMBRE TRADUCIDO
+                  country={heroCity.country}
+                  timezone={heroCity.timezone}
+                  now={simulatedTime}
+                  lat={heroCity.lat}
+                  lng={heroCity.lng}
+                  countryCode={heroCity.countryCode}
+                  isHero={true}
+                />
+              );
+            })()}
           </div>
 
           <SortableContext
             items={savedCities.map((c) => c.id)}
             strategy={rectSortingStrategy}
           >
-            {savedCities.map((city) => (
-              <SortableItem key={city.id} id={city.id}>
-                <ClockCard
-                  city={city.name}
-                  country={city.country}
-                  timezone={city.timezone}
-                  now={simulatedTime}
-                  lat={city.lat}
-                  lng={city.lng}
-                  countryCode={city.countryCode}
-                  onDelete={() => handleRemoveCity(city)}
-                />
-              </SortableItem>
-            ))}
+            {savedCities.map((city) => {
+              // CORRECCIÓN: Buscamos por NOMBRE, no por ID
+              // Así funciona aunque el ID de la API sea diferente al tuyo manual
+              const staticData = AVAILABLE_CITIES.find(
+                (c) => c.name === city.name,
+              );
+
+              // Obtenemos nombres disponibles
+              const namesSource = staticData?.names || city.names;
+
+              // Elegimos el idioma
+              const displayName =
+                (namesSource as Record<string, string>)?.[language] ||
+                city.name;
+
+              return (
+                <SortableItem key={city.id} id={city.id}>
+                  <ClockCard
+                    city={displayName} // <--- Nombre traducido
+                    country={city.country}
+                    timezone={city.timezone}
+                    now={simulatedTime}
+                    lat={city.lat}
+                    lng={city.lng}
+                    countryCode={city.countryCode}
+                    onDelete={() => handleRemoveCity(city)}
+                  />
+                </SortableItem>
+              );
+            })}
           </SortableContext>
 
           <button
@@ -351,6 +396,7 @@ export default function Home() {
         <MeetingPlannerModal
           isOpen={true}
           onClose={() => setIsPlannerOpen(false)}
+          heroCity={heroCity}
         />
       )}
     </main>

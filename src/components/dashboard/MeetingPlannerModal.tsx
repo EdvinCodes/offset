@@ -4,36 +4,49 @@ import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
 import { X, Calendar, Clock, Copy, Check, Globe } from "lucide-react";
 import { useCityStore } from "@/store/useCityStore";
-// 1. IMPORTAMOS EL TIPO 'Locale' AQUÍ
+import { City, AVAILABLE_CITIES } from "@/data/cities"; // Importamos City type
 import { format, addHours, startOfDay, type Locale } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 
-// Importar locales
 import { es, enUS, fr, de } from "date-fns/locale";
 
 interface MeetingPlannerModalProps {
   isOpen: boolean;
   onClose: () => void;
+  heroCity: City; // <--- 1. AÑADIR ESTA PROP
 }
 
 export default function MeetingPlannerModal({
   isOpen,
   onClose,
+  heroCity, // <--- 2. RECIBIR LA PROP
 }: MeetingPlannerModalProps) {
   const { t, language } = useTranslation();
   const savedCities = useCityStore((state) => state.savedCities);
+
+  // 3. CREAR LISTA COMBINADA (Tú + Ciudades guardadas)
+  // Usamos useMemo para que no se recalcule innecesariamente
+  const allParticipants = useMemo(() => {
+    // Si la heroCity ya está en guardadas (por error), filtramos para no duplicar,
+    // pero generalmente no debería pasar si la lógica de page.tsx está bien.
+    // Simplemente ponemos al Hero primero.
+    return [heroCity, ...savedCities];
+  }, [heroCity, savedCities]);
+
   const [baseDate, setBaseDate] = useState<Date>(new Date());
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // 2. CORREGIDO: Usamos Record<string, Locale> en lugar de 'any'
   const dateLocales: Record<string, Locale> = { es, en: enUS, fr, de };
-
   const currentLocale = dateLocales[language] || es;
 
-  const hasCities = savedCities.length > 0;
+  // Cambiamos la condición: siempre hay al menos 1 ciudad (la tuya),
+  // pero mantendremos el "Empty State" si NO hay ciudades guardadas extra,
+  // O podemos mostrar solo tu línea. Lo mejor es mostrar el planner
+  // siempre que haya ciudades guardadas, porque planificar contigo mismo es raro.
+  const hasSavedCities = savedCities.length > 0;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -72,17 +85,21 @@ export default function MeetingPlannerModal({
     if (selectedSlot === null) return;
     const selectedDate = hoursColumns[selectedSlot];
 
-    // TRADUCCIÓN: 'proposedMeeting'
     let text = `📅 ${t.proposedMeeting || "Reunión"}: ${format(selectedDate, "dd/MM/yyyy")}\n\n`;
 
-    savedCities.forEach((city) => {
+    // 4. USAR LA LISTA COMBINADA PARA EL COPIADO
+    allParticipants.forEach((city) => {
+      const staticData = AVAILABLE_CITIES.find((c) => c.name === city.name);
+      const namesSource = staticData?.names || city.names;
+      const displayName =
+        (namesSource as Record<string, string>)?.[language] || city.name;
+
       const cityTime = toZonedTime(selectedDate, city.timezone);
-      text += `📍 ${city.name}: ${format(cityTime, "HH:mm")}\n`;
+      text += `📍 ${displayName}: ${format(cityTime, "HH:mm")}\n`;
     });
 
     navigator.clipboard.writeText(text);
 
-    // TRADUCCIÓN: 'summaryCopied'
     toast.success(t.summaryCopied, {
       description: t.summaryCopiedDesc,
       icon: "📋",
@@ -119,7 +136,7 @@ export default function MeetingPlannerModal({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
-            {hasCities && (
+            {hasSavedCities && (
               <div className="relative flex-1 sm:flex-none">
                 <input
                   type="date"
@@ -139,15 +156,14 @@ export default function MeetingPlannerModal({
         </div>
 
         {/* CONTENIDO PRINCIPAL */}
-        {hasCities ? (
-          /* --- MODO NORMAL --- */
+        {hasSavedCities ? (
           <>
             <div className="flex-1 overflow-auto relative scrollbar-thin bg-white dark:bg-[#18181B]">
               <div className="min-w-[800px] sm:min-w-[1000px] p-4 sm:p-6">
                 {/* Cabecera Sticky */}
                 <div className="flex mb-2 sticky top-0 z-50 bg-white dark:bg-[#18181B] pb-2 shadow-sm border-b border-zinc-100 dark:border-zinc-800/50">
                   <div className="w-32 sm:w-48 shrink-0 font-bold text-zinc-400 text-[10px] sm:text-xs uppercase tracking-wider flex items-end pb-2 pl-2 truncate">
-                    {t.citiesLocalTime} {/* TRADUCCIÓN */}
+                    {t.citiesLocalTime}
                   </div>
                   <div className="flex-1 grid grid-cols-[repeat(24,minmax(0,1fr))]">
                     {hoursColumns.map((date, i) => (
@@ -175,69 +191,87 @@ export default function MeetingPlannerModal({
 
                 {/* Filas */}
                 <div className="space-y-2 sm:space-y-3">
-                  {savedCities.map((city) => (
-                    <div
-                      key={city.id}
-                      className="flex items-center group relative"
-                    >
-                      <div className="w-32 sm:w-48 shrink-0 pr-2 sm:pr-4 sticky left-0 bg-white dark:bg-[#18181B] z-40 group-hover:bg-zinc-50 dark:group-hover:bg-zinc-900/50 transition-colors rounded-l-lg shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] py-1">
-                        <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5">
-                          {city.countryCode && (
-                            <Image
-                              src={`https://flagcdn.com/20x15/${city.countryCode.toLowerCase()}.png`}
-                              alt="flag"
-                              width={20}
-                              height={15}
-                              className="w-3.5 h-2.5 sm:w-4 sm:h-3 object-cover rounded-[1px] opacity-70 shrink-0"
-                            />
-                          )}
-                          <span className="font-bold text-sm sm:text-base text-zinc-800 dark:text-white truncate">
-                            {city.name}
-                          </span>
-                        </div>
-                        <div className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-500 truncate pl-5 sm:pl-6">
-                          {city.timezone}
-                        </div>
-                      </div>
+                  {/* 5. USAR ALLPARTICIPANTS PARA RENDERIZAR */}
+                  {allParticipants.map((city, index) => {
+                    const staticData = AVAILABLE_CITIES.find(
+                      (c) => c.name === city.name,
+                    );
+                    const namesSource = staticData?.names || city.names;
+                    const displayName =
+                      (namesSource as Record<string, string>)?.[language] ||
+                      city.name;
 
-                      <div className="flex-1 grid grid-cols-[repeat(24,minmax(0,1fr))]">
-                        {hoursColumns.map((baseHour, i) => {
-                          const cityTime = toZonedTime(baseHour, city.timezone);
-                          const hour = parseInt(format(cityTime, "H"));
-                          const status = getTimeStatus(hour);
-                          const isSelected = selectedSlot === i;
-                          const isNewDay = hour === 0;
+                    // Identificar si es la Hero City (normalmente la primera del array)
+                    const isLocalUser = index === 0;
 
-                          return (
-                            <div
-                              key={i}
-                              onClick={() => setSelectedSlot(i)}
-                              className={`
-                                mx-[1px]
-                                relative h-9 sm:h-10 rounded-md flex items-center justify-center text-xs border cursor-pointer transition-all
-                                ${getStatusColor(status, isSelected)}
-                                ${
-                                  isSelected
-                                    ? "ring-2 ring-indigo-500 z-10"
-                                    : "hover:opacity-80 z-0"
-                                }
-                              `}
+                    return (
+                      <div
+                        key={city.id}
+                        className="flex items-center group relative"
+                      >
+                        <div className="w-32 sm:w-48 shrink-0 pr-2 sm:pr-4 sticky left-0 bg-white dark:bg-[#18181B] z-40 group-hover:bg-zinc-50 dark:group-hover:bg-zinc-900/50 transition-colors rounded-l-lg shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] py-1">
+                          <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5">
+                            {city.countryCode && (
+                              <Image
+                                src={`https://flagcdn.com/20x15/${city.countryCode.toLowerCase()}.png`}
+                                alt="flag"
+                                width={20}
+                                height={15}
+                                className="w-3.5 h-2.5 sm:w-4 sm:h-3 object-cover rounded-[1px] opacity-70 shrink-0"
+                              />
+                            )}
+                            <span
+                              className={`font-bold text-sm sm:text-base truncate ${isLocalUser ? "text-indigo-600 dark:text-indigo-400" : "text-zinc-800 dark:text-white"}`}
                             >
-                              <span className="font-semibold">{hour}</span>
-                              {isNewDay && !isSelected && (
-                                <span className="absolute -top-2.5 left-0 text-[8px] sm:text-[9px] bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-100 px-1.5 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap z-20 pointer-events-none">
-                                  {/* FECHA LOCALE DINÁMICA */}
-                                  {format(cityTime, "dd MMM", {
-                                    locale: currentLocale,
-                                  })}
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
+                              {displayName} {isLocalUser && "(Tú)"}
+                            </span>
+                          </div>
+                          <div className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-500 truncate pl-5 sm:pl-6">
+                            {city.timezone}
+                          </div>
+                        </div>
+
+                        <div className="flex-1 grid grid-cols-[repeat(24,minmax(0,1fr))]">
+                          {hoursColumns.map((baseHour, i) => {
+                            const cityTime = toZonedTime(
+                              baseHour,
+                              city.timezone,
+                            );
+                            const hour = parseInt(format(cityTime, "H"));
+                            const status = getTimeStatus(hour);
+                            const isSelected = selectedSlot === i;
+                            const isNewDay = hour === 0;
+
+                            return (
+                              <div
+                                key={i}
+                                onClick={() => setSelectedSlot(i)}
+                                className={`
+                                  mx-[1px]
+                                  relative h-9 sm:h-10 rounded-md flex items-center justify-center text-xs border cursor-pointer transition-all
+                                  ${getStatusColor(status, isSelected)}
+                                  ${
+                                    isSelected
+                                      ? "ring-2 ring-indigo-500 z-10"
+                                      : "hover:opacity-80 z-0"
+                                  }
+                                `}
+                              >
+                                <span className="font-semibold">{hour}</span>
+                                {isNewDay && !isSelected && (
+                                  <span className="absolute -top-2.5 left-0 text-[8px] sm:text-[9px] bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-100 px-1.5 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap z-20 pointer-events-none">
+                                    {format(cityTime, "dd MMM", {
+                                      locale: currentLocale,
+                                    })}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Leyenda */}
@@ -290,7 +324,6 @@ export default function MeetingPlannerModal({
             )}
           </>
         ) : (
-          /* --- EMPTY STATE --- */
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in-95 duration-300">
             <div className="w-20 h-20 rounded-full bg-zinc-100 dark:bg-[#27272A] flex items-center justify-center mb-6">
               <Globe className="w-10 h-10 text-zinc-400" />

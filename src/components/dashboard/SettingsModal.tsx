@@ -54,7 +54,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     }
   };
 
-  // --- FUNCIÓN IMPORTAR ---
+  // --- FUNCIÓN IMPORTAR (VERSIÓN ROBUSTA) ---
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileReader = new FileReader();
     if (e.target.files && e.target.files.length > 0) {
@@ -62,30 +62,30 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
       fileReader.onload = (event) => {
         try {
-          const json = JSON.parse(event.target?.result as string);
+          const content = event.target?.result as string;
+          if (!content) return;
+
+          const json = JSON.parse(content);
 
           if (Array.isArray(json)) {
+            // Validamos que al menos tenga las propiedades básicas para no romper la store
             restoreBackup(json);
-
-            // TRADUCCIÓN: Restauración OK
             toast.success(t.importSuccess, {
               description: t.importSuccessDesc,
             });
             onClose();
           } else {
-            // TRADUCCIÓN: Archivo inválido
             toast.error(t.invalidFile, {
               description: t.invalidFileDesc,
             });
           }
         } catch {
-          // TRADUCCIÓN: Error lectura
+          // Si el JSON.parse falla (archivo corrupto o no es JSON)
           toast.error(t.readError, {
             description: t.readErrorDesc,
           });
         }
       };
-
       e.target.value = "";
     }
   };

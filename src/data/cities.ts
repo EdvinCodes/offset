@@ -1,11 +1,18 @@
 export interface City {
   id: string;
-  name: string;
+  name: string; // Nombre por defecto (Inglés/Internacional)
   country: string;
   timezone: string;
-  lat?: number; // Coordenadas para el clima
-  lng?: number; // Coordenadas para el clima
-  countryCode?: string; // Código ISO para la bandera (ej: "ES", "US")
+  lat?: number;
+  lng?: number;
+  countryCode?: string;
+  // --- NUEVO: Nombres traducidos ---
+  names?: {
+    es?: string;
+    fr?: string;
+    de?: string;
+    en?: string;
+  };
 }
 
 export const AVAILABLE_CITIES: City[] = [
@@ -13,10 +20,12 @@ export const AVAILABLE_CITIES: City[] = [
   {
     id: "lon",
     name: "London",
+    names: { es: "Londres", fr: "Londres", de: "London" },
     country: "United Kingdom",
     timezone: "Europe/London",
     lat: 51.5074,
     lng: -0.1278,
+    countryCode: "GB",
   },
   {
     id: "mad",
@@ -25,6 +34,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Europe/Madrid",
     lat: 40.4168,
     lng: -3.7038,
+    countryCode: "ES",
   },
   {
     id: "bcn",
@@ -33,22 +43,27 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Europe/Madrid",
     lat: 41.3851,
     lng: 2.1734,
+    countryCode: "ES",
   },
   {
     id: "par",
     name: "Paris",
+    names: { es: "París", de: "Paris" },
     country: "France",
     timezone: "Europe/Paris",
     lat: 48.8566,
     lng: 2.3522,
+    countryCode: "FR",
   },
   {
     id: "ber",
     name: "Berlin",
+    names: { es: "Berlín" },
     country: "Germany",
     timezone: "Europe/Berlin",
     lat: 52.52,
     lng: 13.405,
+    countryCode: "DE",
   },
   {
     id: "fra",
@@ -57,94 +72,117 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Europe/Berlin",
     lat: 50.1109,
     lng: 8.6821,
+    countryCode: "DE",
   },
   {
     id: "mun",
     name: "Munich",
+    names: { es: "Múnich", de: "München", fr: "Munich" },
     country: "Germany",
     timezone: "Europe/Berlin",
     lat: 48.1351,
     lng: 11.582,
+    countryCode: "DE",
   },
   {
     id: "rom",
     name: "Rome",
+    names: { es: "Roma", fr: "Rome", de: "Rom" },
     country: "Italy",
     timezone: "Europe/Rome",
     lat: 41.9028,
     lng: 12.4964,
+    countryCode: "IT",
   },
   {
     id: "mil",
     name: "Milan",
+    names: { es: "Milán", de: "Mailand" },
     country: "Italy",
     timezone: "Europe/Rome",
     lat: 45.4642,
     lng: 9.19,
+    countryCode: "IT",
   },
   {
     id: "ams",
     name: "Amsterdam",
+    names: { es: "Ámsterdam" },
     country: "Netherlands",
     timezone: "Europe/Amsterdam",
     lat: 52.3676,
     lng: 4.9041,
+    countryCode: "NL",
   },
   {
     id: "bru",
     name: "Brussels",
+    names: { es: "Bruselas", fr: "Bruxelles", de: "Brüssel" },
     country: "Belgium",
     timezone: "Europe/Brussels",
     lat: 50.8503,
     lng: 4.3517,
+    countryCode: "BE",
   },
   {
     id: "zur",
     name: "Zurich",
+    names: { es: "Zúrich", de: "Zürich" },
     country: "Switzerland",
     timezone: "Europe/Zurich",
     lat: 47.3769,
     lng: 8.5417,
+    countryCode: "CH",
   },
   {
     id: "gen",
     name: "Geneva",
+    names: { es: "Ginebra", fr: "Genève", de: "Genf" },
     country: "Switzerland",
     timezone: "Europe/Zurich",
     lat: 46.2044,
     lng: 6.1432,
+    countryCode: "CH",
   },
   {
     id: "vie",
     name: "Vienna",
+    names: { es: "Viena", de: "Wien", fr: "Vienne" },
     country: "Austria",
     timezone: "Europe/Vienna",
     lat: 48.2082,
     lng: 16.3738,
+    countryCode: "AT",
   },
   {
     id: "dub_ie",
     name: "Dublin",
+    names: { es: "Dublín" },
     country: "Ireland",
     timezone: "Europe/Dublin",
     lat: 53.3498,
     lng: -6.2603,
+    countryCode: "IE",
   },
   {
     id: "cph",
     name: "Copenhagen",
+    names: { es: "Copenhague", de: "Kopenhagen", fr: "Copenhague" },
     country: "Denmark",
     timezone: "Europe/Copenhagen",
     lat: 55.6761,
     lng: 12.5683,
+    countryCode: "DK",
   },
   {
     id: "sto",
     name: "Stockholm",
+    names: { es: "Estocolmo" },
     country: "Sweden",
     timezone: "Europe/Stockholm",
     lat: 59.3293,
     lng: 18.0686,
+    countryCode: "SE",
   },
   {
     id: "osl",
@@ -153,6 +191,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Europe/Oslo",
     lat: 59.9139,
     lng: 10.7522,
+    countryCode: "NO",
   },
   {
     id: "hel",
@@ -161,64 +200,79 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Europe/Helsinki",
     lat: 60.1699,
     lng: 24.9384,
+    countryCode: "FI",
   },
   {
     id: "lis",
     name: "Lisbon",
+    names: { es: "Lisboa", de: "Lissabon", fr: "Lisbonne" },
     country: "Portugal",
     timezone: "Europe/Lisbon",
     lat: 38.7223,
     lng: -9.1393,
+    countryCode: "PT",
   },
   {
     id: "rey",
     name: "Reykjavik",
+    names: { es: "Reikiavik" },
     country: "Iceland",
     timezone: "Atlantic/Reykjavik",
     lat: 64.1466,
     lng: -21.9426,
+    countryCode: "IS",
   },
 
   // --- EUROPA (ESTE) ---
   {
     id: "mos",
     name: "Moscow",
+    names: { es: "Moscú", fr: "Moscou", de: "Moskau" },
     country: "Russia",
     timezone: "Europe/Moscow",
     lat: 55.7558,
     lng: 37.6173,
+    countryCode: "RU",
   },
   {
     id: "ist",
     name: "Istanbul",
+    names: { es: "Estambul", de: "Istanbul" },
     country: "Turkey",
     timezone: "Europe/Istanbul",
     lat: 41.0082,
     lng: 28.9784,
+    countryCode: "TR",
   },
   {
     id: "kie",
     name: "Kyiv",
+    names: { es: "Kiev", de: "Kiew" },
     country: "Ukraine",
     timezone: "Europe/Kyiv",
     lat: 50.4501,
     lng: 30.5234,
+    countryCode: "UA",
   },
   {
     id: "war",
     name: "Warsaw",
+    names: { es: "Varsovia", de: "Warschau", fr: "Varsovie" },
     country: "Poland",
     timezone: "Europe/Warsaw",
     lat: 52.2297,
     lng: 21.0122,
+    countryCode: "PL",
   },
   {
     id: "pra",
     name: "Prague",
+    names: { es: "Praga", de: "Prag" },
     country: "Czech Republic",
     timezone: "Europe/Prague",
     lat: 50.0755,
     lng: 14.4378,
+    countryCode: "CZ",
   },
   {
     id: "bud",
@@ -227,40 +281,49 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Europe/Budapest",
     lat: 47.4979,
     lng: 19.0402,
+    countryCode: "HU",
   },
   {
     id: "ath",
     name: "Athens",
+    names: { es: "Atenas", de: "Athen", fr: "Athènes" },
     country: "Greece",
     timezone: "Europe/Athens",
     lat: 37.9838,
     lng: 23.7275,
+    countryCode: "GR",
   },
   {
     id: "buc",
     name: "Bucharest",
+    names: { es: "Bucarest", de: "Bukarest" },
     country: "Romania",
     timezone: "Europe/Bucharest",
     lat: 44.4268,
     lng: 26.1025,
+    countryCode: "RO",
   },
 
   // --- AMÉRICA DEL NORTE (USA) ---
   {
     id: "nyc",
     name: "New York",
+    names: { es: "Nueva York", fr: "New York", de: "New York" },
     country: "USA",
     timezone: "America/New_York",
     lat: 40.7128,
     lng: -74.006,
+    countryCode: "US",
   },
   {
     id: "lax",
     name: "Los Angeles",
+    names: { es: "Los Ángeles" },
     country: "USA",
     timezone: "America/Los_Angeles",
     lat: 34.0522,
     lng: -118.2437,
+    countryCode: "US",
   },
   {
     id: "chi",
@@ -269,6 +332,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Chicago",
     lat: 41.8781,
     lng: -87.6298,
+    countryCode: "US",
   },
   {
     id: "hou",
@@ -277,6 +341,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Chicago",
     lat: 29.7604,
     lng: -95.3698,
+    countryCode: "US",
   },
   {
     id: "pho",
@@ -285,14 +350,17 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Phoenix",
     lat: 33.4484,
     lng: -112.074,
+    countryCode: "US",
   },
   {
     id: "phi",
     name: "Philadelphia",
+    names: { es: "Filadelfia" },
     country: "USA",
     timezone: "America/New_York",
     lat: 39.9526,
     lng: -75.1652,
+    countryCode: "US",
   },
   {
     id: "san",
@@ -301,6 +369,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Los_Angeles",
     lat: 32.7157,
     lng: -117.1611,
+    countryCode: "US",
   },
   {
     id: "dal",
@@ -309,14 +378,17 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Chicago",
     lat: 32.7767,
     lng: -96.797,
+    countryCode: "US",
   },
   {
     id: "sjs",
     name: "San Jose",
+    names: { es: "San José" },
     country: "USA",
     timezone: "America/Los_Angeles",
     lat: 37.3382,
     lng: -121.8863,
+    countryCode: "US",
   },
   {
     id: "sfo",
@@ -325,6 +397,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Los_Angeles",
     lat: 37.7749,
     lng: -122.4194,
+    countryCode: "US",
   },
   {
     id: "sea",
@@ -333,6 +406,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Los_Angeles",
     lat: 47.6062,
     lng: -122.3321,
+    countryCode: "US",
   },
   {
     id: "den",
@@ -341,14 +415,17 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Denver",
     lat: 39.7392,
     lng: -104.9903,
+    countryCode: "US",
   },
   {
     id: "was",
     name: "Washington D.C.",
+    names: { es: "Washington D.C." },
     country: "USA",
     timezone: "America/New_York",
     lat: 38.9072,
     lng: -77.0369,
+    countryCode: "US",
   },
   {
     id: "bos",
@@ -357,6 +434,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/New_York",
     lat: 42.3601,
     lng: -71.0589,
+    countryCode: "US",
   },
   {
     id: "mia",
@@ -365,6 +443,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/New_York",
     lat: 25.7617,
     lng: -80.1918,
+    countryCode: "US",
   },
   {
     id: "las",
@@ -373,6 +452,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Los_Angeles",
     lat: 36.1699,
     lng: -115.1398,
+    countryCode: "US",
   },
   {
     id: "atl",
@@ -381,6 +461,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/New_York",
     lat: 33.749,
     lng: -84.388,
+    countryCode: "US",
   },
   {
     id: "det",
@@ -389,6 +470,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Detroit",
     lat: 42.3314,
     lng: -83.0458,
+    countryCode: "US",
   },
 
   // --- AMÉRICA DEL NORTE (CANADA & MEXICO) ---
@@ -399,6 +481,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Toronto",
     lat: 43.651,
     lng: -79.347,
+    countryCode: "CA",
   },
   {
     id: "van",
@@ -407,6 +490,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Vancouver",
     lat: 49.2827,
     lng: -123.1207,
+    countryCode: "CA",
   },
   {
     id: "mtl",
@@ -415,6 +499,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Toronto",
     lat: 45.5017,
     lng: -73.5673,
+    countryCode: "CA",
   },
   {
     id: "cal",
@@ -423,14 +508,17 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Edmonton",
     lat: 51.0447,
     lng: -114.0719,
+    countryCode: "CA",
   },
   {
     id: "mex",
     name: "Mexico City",
+    names: { es: "Ciudad de México", de: "Mexiko-Stadt", fr: "Mexico" },
     country: "Mexico",
     timezone: "America/Mexico_City",
     lat: 19.4326,
     lng: -99.1332,
+    countryCode: "MX",
   },
   {
     id: "gdl",
@@ -439,6 +527,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Mexico_City",
     lat: 20.6597,
     lng: -103.3496,
+    countryCode: "MX",
   },
   {
     id: "mty",
@@ -447,24 +536,29 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Monterrey",
     lat: 25.6866,
     lng: -100.3161,
+    countryCode: "MX",
   },
 
   // --- AMÉRICA DEL SUR & CARIBE ---
   {
     id: "sao",
     name: "São Paulo",
+    names: { es: "Sao Paulo" },
     country: "Brazil",
     timezone: "America/Sao_Paulo",
     lat: -23.5505,
     lng: -46.6333,
+    countryCode: "BR",
   },
   {
     id: "rio",
     name: "Rio de Janeiro",
+    names: { es: "Río de Janeiro" },
     country: "Brazil",
     timezone: "America/Sao_Paulo",
     lat: -22.9068,
     lng: -43.1729,
+    countryCode: "BR",
   },
   {
     id: "bue",
@@ -473,6 +567,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Argentina/Buenos_Aires",
     lat: -34.6037,
     lng: -58.3816,
+    countryCode: "AR",
   },
   {
     id: "bog",
@@ -481,6 +576,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Bogota",
     lat: 4.711,
     lng: -74.0721,
+    countryCode: "CO",
   },
   {
     id: "lim",
@@ -489,6 +585,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Lima",
     lat: -12.0464,
     lng: -77.0428,
+    countryCode: "PE",
   },
   {
     id: "scl",
@@ -497,6 +594,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Santiago",
     lat: -33.4489,
     lng: -70.6693,
+    countryCode: "CL",
   },
   {
     id: "car",
@@ -505,32 +603,39 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "America/Caracas",
     lat: 10.4806,
     lng: -66.9036,
+    countryCode: "VE",
   },
   {
     id: "hav",
     name: "Havana",
+    names: { es: "La Habana", de: "Havanna", fr: "La Havane" },
     country: "Cuba",
     timezone: "America/Havana",
     lat: 23.1136,
     lng: -82.3666,
+    countryCode: "CU",
   },
   {
     id: "pan",
     name: "Panama City",
+    names: { es: "Ciudad de Panamá", de: "Panama-Stadt", fr: "Panama" },
     country: "Panama",
     timezone: "America/Panama",
     lat: 8.9824,
     lng: -79.5199,
+    countryCode: "PA",
   },
 
   // --- ASIA (ESTE) ---
   {
     id: "tyo",
     name: "Tokyo",
+    names: { es: "Tokio", de: "Tokio" },
     country: "Japan",
     timezone: "Asia/Tokyo",
     lat: 35.6762,
     lng: 139.6503,
+    countryCode: "JP",
   },
   {
     id: "osa",
@@ -539,56 +644,69 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Asia/Tokyo",
     lat: 34.6937,
     lng: 135.5023,
+    countryCode: "JP",
   },
   {
     id: "seo",
     name: "Seoul",
+    names: { es: "Seúl", de: "Seoul" },
     country: "South Korea",
     timezone: "Asia/Seoul",
     lat: 37.5665,
     lng: 126.978,
+    countryCode: "KR",
   },
   {
     id: "pek",
     name: "Beijing",
+    names: { es: "Pekín", de: "Peking", fr: "Pékin" },
     country: "China",
     timezone: "Asia/Shanghai",
     lat: 39.9042,
     lng: 116.4074,
+    countryCode: "CN",
   },
   {
     id: "sha",
     name: "Shanghai",
+    names: { es: "Shanghái", de: "Shanghai" },
     country: "China",
     timezone: "Asia/Shanghai",
     lat: 31.2304,
     lng: 121.4737,
+    countryCode: "CN",
   },
   {
     id: "hkg",
     name: "Hong Kong",
+    names: { es: "Hong Kong" },
     country: "Hong Kong",
     timezone: "Asia/Hong_Kong",
     lat: 22.3193,
     lng: 114.1694,
+    countryCode: "HK",
   },
   {
     id: "tpe",
     name: "Taipei",
+    names: { es: "Taipéi" },
     country: "Taiwan",
     timezone: "Asia/Taipei",
     lat: 25.033,
     lng: 121.5654,
+    countryCode: "TW",
   },
 
   // --- ASIA (SURESTE) ---
   {
     id: "sgp",
     name: "Singapore",
+    names: { es: "Singapur", de: "Singapur", fr: "Singapour" },
     country: "Singapore",
     timezone: "Asia/Singapore",
     lat: 1.3521,
     lng: 103.8198,
+    countryCode: "SG",
   },
   {
     id: "ban",
@@ -597,14 +715,17 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Asia/Bangkok",
     lat: 13.7563,
     lng: 100.5018,
+    countryCode: "TH",
   },
   {
     id: "jak",
     name: "Jakarta",
+    names: { es: "Yakarta", de: "Jakarta" },
     country: "Indonesia",
     timezone: "Asia/Jakarta",
     lat: -6.2088,
     lng: 106.8456,
+    countryCode: "ID",
   },
   {
     id: "bal",
@@ -613,6 +734,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Asia/Makassar",
     lat: -8.4095,
     lng: 115.1889,
+    countryCode: "ID",
   },
   {
     id: "kul",
@@ -621,6 +743,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Asia/Kuala_Lumpur",
     lat: 3.139,
     lng: 101.6869,
+    countryCode: "MY",
   },
   {
     id: "mnl",
@@ -629,14 +752,17 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Asia/Manila",
     lat: 14.5995,
     lng: 120.9842,
+    countryCode: "PH",
   },
   {
     id: "hcm",
     name: "Ho Chi Minh City",
+    names: { es: "Ciudad Ho Chi Minh" },
     country: "Vietnam",
     timezone: "Asia/Bangkok",
     lat: 10.8231,
     lng: 106.6297,
+    countryCode: "VN",
   },
 
   // --- ASIA (SUR & OESTE) ---
@@ -647,14 +773,17 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Asia/Kolkata",
     lat: 19.076,
     lng: 72.8777,
+    countryCode: "IN",
   },
   {
     id: "del",
     name: "New Delhi",
+    names: { es: "Nueva Delhi" },
     country: "India",
     timezone: "Asia/Kolkata",
     lat: 28.6139,
     lng: 77.209,
+    countryCode: "IN",
   },
   {
     id: "blr",
@@ -663,14 +792,17 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Asia/Kolkata",
     lat: 12.9716,
     lng: 77.5946,
+    countryCode: "IN",
   },
   {
     id: "dxb",
     name: "Dubai",
+    names: { es: "Dubái" },
     country: "UAE",
     timezone: "Asia/Dubai",
     lat: 25.2048,
     lng: 55.2708,
+    countryCode: "AE",
   },
   {
     id: "auh",
@@ -679,14 +811,17 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Asia/Dubai",
     lat: 24.4539,
     lng: 54.3773,
+    countryCode: "AE",
   },
   {
     id: "riy",
     name: "Riyadh",
+    names: { es: "Riad", de: "Riad" },
     country: "Saudi Arabia",
     timezone: "Asia/Riyadh",
     lat: 24.7136,
     lng: 46.6753,
+    countryCode: "SA",
   },
   {
     id: "doh",
@@ -695,6 +830,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Asia/Qatar",
     lat: 25.2854,
     lng: 51.531,
+    countryCode: "QA",
   },
   {
     id: "tel",
@@ -703,24 +839,29 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Asia/Jerusalem",
     lat: 32.0853,
     lng: 34.7818,
+    countryCode: "IL",
   },
   {
     id: "jer",
     name: "Jerusalem",
+    names: { es: "Jerusalén" },
     country: "Israel",
     timezone: "Asia/Jerusalem",
     lat: 31.7683,
     lng: 35.2137,
+    countryCode: "IL",
   },
 
   // --- OCEANÍA ---
   {
     id: "syd",
     name: "Sydney",
+    names: { es: "Sídney" },
     country: "Australia",
     timezone: "Australia/Sydney",
     lat: -33.8688,
     lng: 151.2093,
+    countryCode: "AU",
   },
   {
     id: "mel",
@@ -729,6 +870,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Australia/Melbourne",
     lat: -37.8136,
     lng: 144.9631,
+    countryCode: "AU",
   },
   {
     id: "bri",
@@ -737,6 +879,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Australia/Brisbane",
     lat: -27.4698,
     lng: 153.0251,
+    countryCode: "AU",
   },
   {
     id: "per",
@@ -745,6 +888,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Australia/Perth",
     lat: -31.9505,
     lng: 115.8605,
+    countryCode: "AU",
   },
   {
     id: "akl",
@@ -753,6 +897,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Pacific/Auckland",
     lat: -36.8485,
     lng: 174.7633,
+    countryCode: "NZ",
   },
   {
     id: "wlg",
@@ -761,32 +906,39 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Pacific/Auckland",
     lat: -41.2865,
     lng: 174.7762,
+    countryCode: "NZ",
   },
 
   // --- ÁFRICA ---
   {
     id: "cai",
     name: "Cairo",
+    names: { es: "El Cairo", de: "Kairo", fr: "Le Caire" },
     country: "Egypt",
     timezone: "Africa/Cairo",
     lat: 30.0444,
     lng: 31.2357,
+    countryCode: "EG",
   },
   {
     id: "jnb",
     name: "Johannesburg",
+    names: { es: "Johannesburgo" },
     country: "South Africa",
     timezone: "Africa/Johannesburg",
     lat: -26.2041,
     lng: 28.0473,
+    countryCode: "ZA",
   },
   {
     id: "cpt",
     name: "Cape Town",
+    names: { es: "Ciudad del Cabo", de: "Kapstadt", fr: "Le Cap" },
     country: "South Africa",
     timezone: "Africa/Johannesburg",
     lat: -33.9249,
     lng: 18.4241,
+    countryCode: "ZA",
   },
   {
     id: "los",
@@ -795,6 +947,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Africa/Lagos",
     lat: 6.5244,
     lng: 3.3792,
+    countryCode: "NG",
   },
   {
     id: "nbo",
@@ -803,6 +956,7 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Africa/Nairobi",
     lat: -1.2921,
     lng: 36.8219,
+    countryCode: "KE",
   },
   {
     id: "cas",
@@ -811,5 +965,6 @@ export const AVAILABLE_CITIES: City[] = [
     timezone: "Africa/Casablanca",
     lat: 33.5731,
     lng: -7.5898,
+    countryCode: "MA",
   },
 ];

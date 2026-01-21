@@ -7,11 +7,12 @@ import * as d3Selection from "d3-selection";
 import "d3-transition";
 import * as topojson from "topojson-client";
 import { getNightPath } from "@/lib/solar";
-import { City } from "@/data/cities";
+// 1. IMPORTAR AVAILABLE_CITIES PARA BUSCAR TRADUCCIONES
+import { City, AVAILABLE_CITIES } from "@/data/cities";
 import { useTime } from "@/hooks/useTime";
 import { toZonedTime, format } from "date-fns-tz";
 import { Plus, Minus, RotateCcw } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation"; // 1. IMPORTAR HOOK
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface WorldFeature {
   type: "Feature";
@@ -35,14 +36,15 @@ export default function WorldMap({
   className = "",
   time,
 }: WorldMapProps) {
-  const { t } = useTranslation(); // 2. USAR HOOK
+  // 2. SACAR 'language' DEL HOOK
+  const { t, language } = useTranslation();
   const internalTime = useTime();
   const now = time || internalTime;
 
   const [worldData, setWorldData] = useState<WorldData | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 400 });
   const [hoverCityId, setHoverCityId] = useState<string | null>(null);
-  const [currentK, setCurrentK] = useState(1); // Mantenemos el nivel de zoom actual
+  const [currentK, setCurrentK] = useState(1);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
@@ -227,17 +229,28 @@ export default function WorldMap({
             );
           })}
 
-          {/* CAPA 4: TOOLTIP */}
+          {/* CAPA 4: TOOLTIP (AHORA CON TRADUCCIÓN) */}
           {activeCity && activeCity.lat && activeCity.lng && (
             <g>
               {(() => {
+                // 3. LÓGICA DE TRADUCCIÓN DENTRO DEL TOOLTIP
+                const staticData = AVAILABLE_CITIES.find(
+                  (c) => c.name === activeCity.name,
+                );
+                const namesSource = staticData?.names || activeCity.names;
+                const displayName =
+                  (namesSource as Record<string, string>)?.[language] ||
+                  activeCity.name;
+
                 const [x, y] = projection([activeCity.lng, activeCity.lat]) || [
                   0, 0,
                 ];
                 const cityTime = toZonedTime(now, activeCity.timezone);
                 const timeStr = format(cityTime, "HH:mm");
                 const boxHeight = 44;
-                const textWidth = activeCity.name.length * 8 + 50;
+
+                // Calculamos ancho basado en el nombre traducido
+                const textWidth = displayName.length * 8 + 50;
                 const boxY = y - 35 / currentK;
 
                 return (
@@ -276,7 +289,8 @@ export default function WorldMap({
                         letterSpacing: "0.05em",
                       }}
                     >
-                      {activeCity.name}
+                      {/* 4. USAR EL NOMBRE TRADUCIDO */}
+                      {displayName}
                     </text>
                     <text
                       y={-10}
@@ -317,7 +331,6 @@ export default function WorldMap({
       </div>
 
       <div className="absolute bottom-4 left-6 px-3 py-1 rounded-full bg-white/80 dark:bg-black/40 backdrop-blur-md border border-zinc-200 dark:border-white/5 text-[10px] text-zinc-600 dark:text-zinc-500 uppercase tracking-widest pointer-events-none">
-        {/* 3. TEXTO TRADUCIDO */}
         {t.interactiveMap}
       </div>
     </div>
