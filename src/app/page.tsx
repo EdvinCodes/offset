@@ -17,6 +17,7 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { toast } from "sonner";
+import { Suspense } from "react";
 
 import { useTime } from "@/hooks/useTime";
 import ClockCard from "@/components/dashboard/ClockCard";
@@ -39,7 +40,7 @@ import { parseShareUrl } from "@/lib/share";
 // IMPORTAMOS EL HOOK
 import { useTranslation } from "@/hooks/useTranslation";
 
-export default function Home() {
+function DashboardContent() {
   const { t, language } = useTranslation(); // Inicializamos el hook
 
   const realTime = useTime();
@@ -400,5 +401,15 @@ export default function Home() {
         />
       )}
     </main>
+  );
+}
+
+// 3. Tu export default ahora es así de simple:
+export default function Home() {
+  return (
+    // El fallback puede ser tu Skeleton para que la transición sea fluida
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardContent />
+    </Suspense>
   );
 }
