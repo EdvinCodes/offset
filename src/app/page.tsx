@@ -53,34 +53,54 @@ export default function Home() {
     }),
   );
 
-  // --- LÓGICA DE UBICACIÓN ---
+  // --- LÓGICA DE UBICACIÓN (CON CACHÉ Y API NUEVA) ---
   useEffect(() => {
     const initLocation = async () => {
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-      try {
-        // 1. INTENTO POR IP (Solución Global)
-        const ipRes = await fetch("https://ipapi.co/json/");
+      // 1. INTENTO POR CACHÉ (Evita el error 429 si recargas mucho)
+      const cached = localStorage.getItem("user_hero_location");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          // Actualizamos el estado con lo guardado
+          setHeroCity(parsed);
+          setIsLoaded(true);
+          return; // ¡Salimos! No hacemos petición API
+        } catch {
+          localStorage.removeItem("user_hero_location");
+        }
+      }
 
-        if (ipRes.ok) {
-          const ipData = await ipRes.json();
-          setHeroCity({
+      // 2. INTENTO POR API (Usamos ipwho.is que es más generosa)
+      try {
+        const ipRes = await fetch("https://ipwho.is/");
+        const ipData = await ipRes.json();
+
+        // ipwho.is devuelve success: true/false
+        if (ipData.success) {
+          const newHero = {
             id: "local-user",
             name: ipData.city || "Ubicación Local",
-            country: ipData.country_name || "Tu Ubicación",
-            timezone: userTimezone,
+            country: ipData.country || "Tu Ubicación",
+            timezone: userTimezone, // Preferimos la del sistema
             lat: ipData.latitude,
             lng: ipData.longitude,
-            countryCode: ipData.country_code,
-          });
-          setIsLoaded(true); // <--- ÉXITO: Terminamos aquí
+            countryCode: ipData.country_code, // Ej: "ES"
+          };
+
+          setHeroCity(newHero);
+          // GUARDAMOS EN CACHÉ
+          localStorage.setItem("user_hero_location", JSON.stringify(newHero));
+
+          setIsLoaded(true);
           return;
         }
       } catch (error) {
-        console.warn("Fallo IP, probando fallback...", error);
+        console.warn("Fallo API IP, usando fallback de zona horaria...", error);
       }
 
-      // 2. FALLBACK (Si falla IP, usamos zona horaria como antes)
+      // 3. FALLBACK (Si falla API, deducimos por zona horaria)
       const cityQuery = userTimezone.split("/").pop()?.replace(/_/g, " ") || "";
       if (cityQuery) {
         try {
@@ -90,7 +110,7 @@ export default function Home() {
           const data = await response.json();
           if (data.results?.[0]) {
             const r = data.results[0];
-            setHeroCity({
+            const fallbackHero = {
               id: "local-user",
               name: r.name,
               country: r.country || "Ubicación",
@@ -98,17 +118,22 @@ export default function Home() {
               lat: r.latitude,
               lng: r.longitude,
               countryCode: r.country_code,
-            });
+            };
+            setHeroCity(fallbackHero);
+            // También guardamos esto para no spamear a Open-Meteo
+            localStorage.setItem(
+              "user_hero_location",
+              JSON.stringify(fallbackHero),
+            );
           }
         } catch (e) {
           console.error(e);
         }
       }
 
-      setIsLoaded(true); // <--- FINAL: Quitamos el skeleton sea cual sea el resultado
+      setIsLoaded(true);
     };
 
-    // Pequeño delay para asegurar montaje
     const timer = setTimeout(initLocation, 0);
     return () => clearTimeout(timer);
   }, []);
