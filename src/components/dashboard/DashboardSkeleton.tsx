@@ -10,8 +10,10 @@ export default function DashboardSkeleton() {
           <Logo className="scale-75 sm:scale-100 origin-left grayscale" />
         </div>
 
-        {/* BOTONERA SKELETON (Ahora son 2 botones) */}
+        {/* BOTONERA SKELETON (Ahora son 3 botones: Share, Planner, Settings) */}
         <div className="flex items-center gap-3">
+          <Skeleton className="w-10 h-10 sm:w-12 sm:h-12 rounded-full" />{" "}
+          {/* Share */}
           <Skeleton className="w-10 h-10 sm:w-12 sm:h-12 rounded-full" />{" "}
           {/* Planner */}
           <Skeleton className="w-10 h-10 sm:w-12 sm:h-12 rounded-full" />{" "}

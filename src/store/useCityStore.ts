@@ -8,34 +8,33 @@ interface CityStore {
   removeCity: (cityId: string) => void;
   reorderCities: (newOrder: City[]) => void;
   restoreBackup: (cities: City[]) => void;
+  overrideCities: (cities: City[]) => void;
 }
 
 export const useCityStore = create<CityStore>()(
   persist(
     (set) => ({
       savedCities: [],
-
       addCity: (city) =>
         set((state) => {
           if (state.savedCities.find((c) => c.id === city.id)) return state;
           return { savedCities: [...state.savedCities, city] };
         }),
-
       removeCity: (cityId) =>
         set((state) => ({
           savedCities: state.savedCities.filter((c) => c.id !== cityId),
         })),
-
       reorderCities: (newOrder) =>
         set(() => ({
           savedCities: newOrder,
         })),
-
       // Simplemente reemplaza el estado actual con el backup
       restoreBackup: (cities) =>
         set(() => ({
           savedCities: cities,
         })),
+
+      overrideCities: (cities) => set({ savedCities: cities }),
     }),
     {
       name: "offset-storage",

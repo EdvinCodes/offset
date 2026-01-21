@@ -31,6 +31,10 @@ import { City, AVAILABLE_CITIES } from "@/data/cities";
 import { useCityStore } from "@/store/useCityStore";
 import { Plus, CalendarRange } from "lucide-react";
 
+import { useSearchParams } from "next/navigation";
+import ShareButton from "@/components/dashboard/ShareButton";
+import { parseShareUrl } from "@/lib/share";
+
 export default function Home() {
   const realTime = useTime();
   const [timeOffset, setTimeOffset] = useState(0);
@@ -39,7 +43,9 @@ export default function Home() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPlannerOpen, setIsPlannerOpen] = useState(false);
 
-  const { savedCities, removeCity, reorderCities } = useCityStore();
+  const { savedCities, removeCity, reorderCities, overrideCities } =
+    useCityStore();
+  const searchParams = useSearchParams();
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [heroCity, setHeroCity] = useState<City>({
@@ -62,6 +68,26 @@ export default function Home() {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
+
+  // --- NUEVA LÓGICA: LEER URL COMPARTIDA ---
+  useEffect(() => {
+    // Solo ejecutamos si hay parametros en la URL
+    if (searchParams.size > 0) {
+      const sharedCities = parseShareUrl(searchParams);
+
+      if (sharedCities && sharedCities.length > 0) {
+        // 1. Sobreescribimos el estado local con lo compartido
+        overrideCities(sharedCities);
+
+        // 2. Limpiamos la URL para quitar el chorizo de base64 (?d=...)
+        // Usamos window.history para no recargar la página
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, "", newUrl);
+
+        // Opcional: Podrías poner aquí un toast/aviso: "Dashboard cargado desde enlace compartido"
+      }
+    }
+  }, [searchParams, overrideCities]);
 
   // --- LÓGICA DE UBICACIÓN (CON CACHÉ Y API ipwho.is) ---
   useEffect(() => {
@@ -172,6 +198,9 @@ export default function Home() {
 
         {/* BOTONERA (Planner + Settings) */}
         <div className="flex items-center gap-3">
+          {/* NUEVO BOTÓN SHARE */}
+          <ShareButton />
+
           {/* Botón Meeting Planner */}
           <button
             onClick={() => setIsPlannerOpen(true)}
