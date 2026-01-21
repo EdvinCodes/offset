@@ -166,7 +166,7 @@ export default function Home() {
               <Plus className="w-8 h-8" />
             </div>
             <span className="text-xs sm:text-sm font-bold tracking-widest uppercase">
-              Añadir Ciudad
+              Añadir Reloj
             </span>
           </button>
         </div>
