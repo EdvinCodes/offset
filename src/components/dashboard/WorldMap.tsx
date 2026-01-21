@@ -76,7 +76,7 @@ export default function WorldMap({
   }, []);
 
   useEffect(() => {
-    if (!svgRef.current || !gRef.current) return;
+    if (!svgRef.current || !gRef.current || !worldData) return; // Añadido check de worldData
 
     const svg = d3Selection.select(svgRef.current);
     const g = d3Selection.select(gRef.current);
@@ -90,12 +90,15 @@ export default function WorldMap({
       ])
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
-        setCurrentK(event.transform.k); // Actualizamos K al hacer zoom
+        setCurrentK(event.transform.k);
       });
 
     zoomBehavior.current = zoom;
     svg.call(zoom);
-  }, [dimensions]);
+
+    // Si ya teníamos un zoom previo (por si recarga datos), lo restauramos o reseteamos si es necesario.
+    // D3 mantiene el estado interno en el nodo DOM, así que esto suele ser suficiente.
+  }, [dimensions, worldData]); // <--- AQUÍ ESTÁ LA CLAVE: Añadir worldData
 
   const handleZoomIn = () => {
     if (svgRef.current && zoomBehavior.current) {
