@@ -16,7 +16,7 @@ import {
   sortableKeyboardCoordinates,
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
-import { toast } from "sonner"; // <--- 1. IMPORTAR TOAST
+import { toast } from "sonner";
 
 import { useTime } from "@/hooks/useTime";
 import ClockCard from "@/components/dashboard/ClockCard";
@@ -36,7 +36,12 @@ import { useSearchParams } from "next/navigation";
 import ShareButton from "@/components/dashboard/ShareButton";
 import { parseShareUrl } from "@/lib/share";
 
+// IMPORTAMOS EL HOOK
+import { useTranslation } from "@/hooks/useTranslation";
+
 export default function Home() {
+  const { t } = useTranslation(); // Inicializamos el hook
+
   const realTime = useTime();
   const [timeOffset, setTimeOffset] = useState(0);
 
@@ -51,7 +56,7 @@ export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [heroCity, setHeroCity] = useState<City>({
     id: "loading",
-    name: "Cargando...",
+    name: t.loading, // "Cargando..."
     country: "...",
     timezone: "UTC",
     lat: 0,
@@ -70,9 +75,8 @@ export default function Home() {
     }),
   );
 
-  // --- NUEVA LÓGICA: LEER URL COMPARTIDA ---
+  // --- LEER URL COMPARTIDA ---
   useEffect(() => {
-    // Añadimos isLoaded para asegurar que la app está lista antes de sobreescribir
     if (searchParams.size > 0 && isLoaded) {
       const sharedCities = parseShareUrl(searchParams);
 
@@ -82,30 +86,37 @@ export default function Home() {
         const newUrl = window.location.pathname;
         window.history.replaceState({}, "", newUrl);
 
-        // 2. TOAST DE ÉXITO AL CARGAR URL
-        toast.success("Dashboard compartido cargado", {
-          description: "Se han importado los relojes correctamente.",
+        // USAMOS TRADUCCIONES PARA EL ÉXITO
+        toast.success(t.dashboardLoaded, {
+          description: t.dashboardImportDesc,
           icon: "🔗",
         });
       } else if (searchParams.get("d")) {
-        // Opcional: Avisar si el link está roto
-        toast.error("Enlace no válido", {
-          description: "No se pudieron cargar los datos compartidos.",
+        // USAMOS TRADUCCIONES PARA EL ERROR
+        toast.error(t.linkInvalid, {
+          description: t.linkInvalidDesc,
         });
       }
     }
-  }, [searchParams, overrideCities, isLoaded]);
+  }, [searchParams, overrideCities, isLoaded, t]); // Añadimos 't' a dependencias por buenas prácticas
 
-  // --- LÓGICA DE UBICACIÓN (CON CACHÉ Y API ipwho.is) ---
+  // --- LÓGICA DE UBICACIÓN ---
   useEffect(() => {
     const initLocation = async () => {
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-      // 1. INTENTO POR CACHÉ
+      // 1. CACHÉ
       const cached = localStorage.getItem("user_hero_location");
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
+          // Si cargamos de caché, tal vez queramos actualizar el nombre traducido
+          // pero por simplicidad usamos el guardado.
+          // Opcional: Podríamos sobrescribir el nombre aquí con t.localLocation si es el ID "local-user"
+          if (parsed.id === "local-user") {
+            parsed.name = t.localLocation;
+            parsed.country = t.yourLocation;
+          }
           setHeroCity(parsed);
           setIsLoaded(true);
           return;
@@ -114,7 +125,7 @@ export default function Home() {
         }
       }
 
-      // 2. INTENTO POR API (ipwho.is)
+      // 2. API
       try {
         const ipRes = await fetch("https://ipwho.is/");
         const ipData = await ipRes.json();
@@ -122,8 +133,8 @@ export default function Home() {
         if (ipData.success) {
           const newHero = {
             id: "local-user",
-            name: ipData.city || "Ubicación Local",
-            country: ipData.country || "Tu Ubicación",
+            name: ipData.city || t.localLocation, // Fallback traducido
+            country: ipData.country || t.yourLocation, // Fallback traducido
             timezone: userTimezone,
             lat: ipData.latitude,
             lng: ipData.longitude,
@@ -136,10 +147,10 @@ export default function Home() {
           return;
         }
       } catch (error) {
-        console.warn("Fallo API IP, usando fallback de zona horaria...", error);
+        console.warn("Fallo API IP", error);
       }
 
-      // 3. FALLBACK (Zona Horaria)
+      // 3. FALLBACK ZONA HORARIA
       const cityQuery = userTimezone.split("/").pop()?.replace(/_/g, " ") || "";
       if (cityQuery) {
         try {
@@ -152,7 +163,7 @@ export default function Home() {
             const fallbackHero = {
               id: "local-user",
               name: r.name,
-              country: r.country || "Ubicación",
+              country: r.country || t.yourLocation,
               timezone: userTimezone,
               lat: r.latitude,
               lng: r.longitude,
@@ -168,12 +179,24 @@ export default function Home() {
           console.error(e);
         }
       }
+
+      // 4. ÚLTIMO RECURSO SI TODO FALLA
+      if (!heroCity.lat) {
+        // Si no hemos setteado nada aún
+        setHeroCity((prev) => ({
+          ...prev,
+          name: t.localLocation,
+          country: t.yourLocation,
+        }));
+      }
+
       setIsLoaded(true);
     };
 
     const timer = setTimeout(initLocation, 0);
     return () => clearTimeout(timer);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t]); // Dependencia 't' para refrescar si cambia el idioma (aunque requeriría recarga completa del efecto)
 
   const allMapPoints = [
     heroCity,
@@ -189,24 +212,19 @@ export default function Home() {
     }
   }
 
-  // --- 3. HELPER PARA BORRAR CON TOAST ---
+  // --- HELPER PARA BORRAR ---
   const handleRemoveCity = (cityToDelete: City) => {
-    // Primero la borramos del estado
     removeCity(cityToDelete.id);
 
-    // Mostramos el toast con la opción de Deshacer
-    toast.info("Reloj eliminado", {
+    toast.info(t.removed, {
       description: `${cityToDelete.name} se ha quitado del dashboard.`,
-      // AQUÍ ESTÁ LA MAGIA DE SONNER
       action: {
-        label: "Deshacer",
-        onClick: () => addCity(cityToDelete), // Si pulsa, la volvemos a añadir
+        label: t.undo,
+        onClick: () => addCity(cityToDelete),
       },
-      duration: 4000, // Damos un poco más de tiempo para reaccionar
+      duration: 4000,
     });
   };
-
-  // --- RENDERIZADO ---
 
   if (!isLoaded) {
     return <DashboardSkeleton />;
@@ -220,24 +238,21 @@ export default function Home() {
           <Logo className="scale-75 sm:scale-100 origin-left" />
         </div>
 
-        {/* BOTONERA (Planner + Settings) */}
         <div className="flex items-center gap-3">
-          {/* NUEVO BOTÓN SHARE */}
           <ShareButton />
 
-          {/* Botón Meeting Planner */}
           <button
             onClick={() => setIsPlannerOpen(true)}
             className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-[#18181B] border border-zinc-200 dark:border-[#27272A] flex items-center justify-center text-zinc-500 dark:text-[#A1A1AA] hover:text-[#6366F1] dark:hover:text-white hover:border-[#6366F1] transition-colors group shadow-sm"
-            title="Planificador de Reuniones"
+            title={t.plannerTitle}
           >
             <CalendarRange className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform" />
           </button>
 
-          {/* Botón Configuración */}
           <button
             onClick={() => setIsSettingsOpen(true)}
             className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-[#18181B] border border-zinc-200 dark:border-[#27272A] flex items-center justify-center text-zinc-500 dark:text-[#A1A1AA] hover:text-[#6366F1] dark:hover:text-white hover:border-[#6366F1] transition-colors group shadow-sm"
+            title={t.settings}
           >
             <svg
               className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-90 transition-transform duration-500"
@@ -261,7 +276,7 @@ export default function Home() {
         <WorldMap cities={allMapPoints} time={simulatedTime} />
       </div>
 
-      {/* GRID DE RELOJES */}
+      {/* GRID */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -296,7 +311,6 @@ export default function Home() {
                   lat={city.lat}
                   lng={city.lng}
                   countryCode={city.countryCode}
-                  // AQUÍ USAMOS LA NUEVA FUNCIÓN CON TOAST
                   onDelete={() => handleRemoveCity(city)}
                 />
               </SortableItem>
@@ -311,7 +325,7 @@ export default function Home() {
               <Plus className="w-8 h-8" />
             </div>
             <span className="text-xs sm:text-sm font-bold tracking-widest uppercase">
-              Añadir Reloj
+              {t.addClock}
             </span>
           </button>
         </div>
@@ -333,7 +347,6 @@ export default function Home() {
         onClose={() => setIsSettingsOpen(false)}
       />
 
-      {/* MEETING PLANNER (Renderizado condicional para resetear estado al abrir) */}
       {isPlannerOpen && (
         <MeetingPlannerModal
           isOpen={true}

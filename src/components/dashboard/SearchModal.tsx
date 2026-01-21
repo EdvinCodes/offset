@@ -5,7 +5,8 @@ import { useState, useEffect } from "react";
 import { X, Search, Plus, Check, Loader2, MapPin } from "lucide-react";
 import { useCityStore } from "@/store/useCityStore";
 import { City } from "@/data/cities";
-import { toast } from "sonner"; // <--- 1. IMPORTAR
+import { toast } from "sonner";
+import { useTranslation } from "@/hooks/useTranslation"; // 1. IMPORTAR HOOK
 
 interface GeocodingResult {
   id: number;
@@ -24,6 +25,8 @@ interface SearchModalProps {
 }
 
 export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
+  const { t, language } = useTranslation(); // 2. USAR HOOK
+
   const [searchTerm, setSearchTerm] = useState("");
   const [results, setResults] = useState<City[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,14 +43,17 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
       }
     }, 500);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
+  // Omitimos searchCities de dependencias para evitar recreación infinita si no usamos useCallback
 
   const searchCities = async (query: string) => {
     setIsLoading(true);
     setResults([]);
     try {
+      // 3. USAR EL IDIOMA ACTUAL EN LA API (language)
       const response = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=es&format=json`,
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=${language}&format=json`,
       );
       const data = await response.json();
 
@@ -63,7 +69,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
               parts.push(item.admin1);
             if (item.country) parts.push(item.country);
             const detailedLocation =
-              parts.join(", ") || "Ubicación desconocida";
+              parts.join(", ") || "Ubicación desconocida"; // Podrías traducir esto si es crítico
 
             return {
               id: item.id.toString(),
@@ -99,9 +105,9 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const handleAdd = (city: City) => {
     addCity(city);
 
-    // --- 2. FEEDBACK VISUAL ---
-    toast.success("Ciudad añadida", {
-      description: `${city.name} ahora está en tu dashboard.`,
+    // 4. USAR TRADUCCIONES EN EL TOAST
+    toast.success(t.cityAdded, {
+      description: `${city.name} ${t.cityAddedDesc || "ahora está en tu dashboard."}`, // Fallback si falta la desc
       icon: "🌍",
     });
 
@@ -124,7 +130,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
           <input
             autoFocus
             type="text"
-            placeholder="Buscar ciudad (ej: Buenos Aires, Berlín)..."
+            placeholder={t.searchPlaceholder} // "Buscar ciudad..."
             className="flex-1 bg-transparent text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-[#52525B] outline-none text-lg"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -140,19 +146,21 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
           {isLoading ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-400 gap-3">
               <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-              <p className="text-sm animate-pulse">Consultando satélites...</p>
+              <p className="text-sm animate-pulse">{t.searching}</p>{" "}
+              {/* "Consultando..." */}
             </div>
           ) : (
             <>
               {searchTerm.length < 3 && results.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-zinc-400 dark:text-[#52525B] gap-2 py-8">
                   <MapPin className="w-8 h-8 opacity-20" />
-                  <p>Escribe al menos 3 letras</p>
+                  <p>{t.minChars}</p> {/* "Escribe al menos 3 letras" */}
                 </div>
               )}
               {searchTerm.length >= 3 && results.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-zinc-500 dark:text-[#52525B] py-8">
-                  <p>{`No encontramos "${searchTerm}"`}</p>
+                  <p>{`${t.notFound} "${searchTerm}"`}</p>{" "}
+                  {/* "No encontramos..." */}
                 </div>
               )}
               {results.length > 0 && (
@@ -183,7 +191,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                               />
                             )}
                             <span>{city.country}</span>
-                            <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 rounded text-zinc-400 shrink-0">
+                            <span className="text-xs bg-zinc-100 dark:bg-zinc-800 px-1.5 rounded text-zinc-400 shrink-0">
                               {city.timezone}
                             </span>
                           </div>
@@ -191,7 +199,8 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                         {isAlreadyAdded ? (
                           <div className="shrink-0 flex items-center gap-2 text-indigo-600 dark:text-[#6366F1] text-xs font-medium bg-indigo-50 dark:bg-indigo-900/20 px-2 py-1 rounded-full">
                             <Check className="w-3 h-3" />
-                            <span>Añadido</span>
+                            <span>{t.addedLabel || t.added}</span>{" "}
+                            {/* "Añadido" */}
                           </div>
                         ) : (
                           <Plus className="w-5 h-5 shrink-0 text-zinc-400 dark:text-[#52525B] group-hover:text-zinc-900 dark:group-hover:text-white" />
@@ -205,12 +214,12 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
           )}
         </div>
         <div className="p-3 bg-zinc-50 dark:bg-[#09090B] border-t border-zinc-200 dark:border-[#27272A] text-[10px] sm:text-xs text-zinc-500 dark:text-[#52525B] flex justify-between items-center shrink-0 px-4">
-          <span>Búsqueda global por Open-Meteo</span>
+          <span>{t.globalSearch}</span> {/* "Búsqueda global..." */}
           <span className="hidden sm:inline">
             <kbd className="bg-white dark:bg-[#27272A] border border-zinc-200 dark:border-transparent px-1.5 py-0.5 rounded text-zinc-600 dark:text-white font-mono shadow-sm mx-1">
               ESC
             </kbd>
-            cerrar
+            {t.close} {/* "cerrar" */}
           </span>
         </div>
       </div>

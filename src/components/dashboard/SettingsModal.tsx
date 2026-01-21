@@ -5,7 +5,8 @@ import { X, Clock, Zap, Moon, Sun, Download, Upload } from "lucide-react";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { useCityStore } from "@/store/useCityStore";
 import { useTheme } from "next-themes";
-import { toast } from "sonner"; // <--- 1. IMPORTAR TOAST
+import { toast } from "sonner";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -17,6 +18,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     useSettingsStore();
   const { savedCities, restoreBackup } = useCityStore();
   const { theme, setTheme } = useTheme();
+
+  const { setLanguage } = useSettingsStore();
+  const { t, language } = useTranslation();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,10 +46,11 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       linkElement.setAttribute("download", exportFileDefaultName);
       linkElement.click();
 
-      // Feedback visual bonito
-      toast.success("Configuración exportada correctamente");
+      // TRADUCCIÓN: Éxito
+      toast.success(t.exportSuccess);
     } catch {
-      toast.error("Error al exportar la configuración");
+      // TRADUCCIÓN: Error
+      toast.error(t.exportError);
     }
   };
 
@@ -61,25 +66,26 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
           if (Array.isArray(json)) {
             restoreBackup(json);
-            // 2. USAR TOAST DE ÉXITO
-            toast.success("Backup restaurado con éxito", {
-              description: "Tus relojes han sido actualizados.",
+
+            // TRADUCCIÓN: Restauración OK
+            toast.success(t.importSuccess, {
+              description: t.importSuccessDesc,
             });
             onClose();
           } else {
-            // 3. USAR TOAST DE ERROR
-            toast.error("Archivo inválido", {
-              description: "El formato del JSON no es compatible.",
+            // TRADUCCIÓN: Archivo inválido
+            toast.error(t.invalidFile, {
+              description: t.invalidFileDesc,
             });
           }
         } catch {
-          toast.error("Error de lectura", {
-            description: "No se pudo procesar el archivo seleccionado.",
+          // TRADUCCIÓN: Error lectura
+          toast.error(t.readError, {
+            description: t.readErrorDesc,
           });
         }
       };
 
-      // Resetear el input para permitir subir el mismo archivo dos veces si falla
       e.target.value = "";
     }
   };
@@ -96,7 +102,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       <div className="relative w-full max-w-md bg-white dark:bg-[#18181B] border border-zinc-200 dark:border-[#27272A] rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
-            Ajustes
+            {t.settings}
           </h2>
           <button
             onClick={onClose}
@@ -110,7 +116,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           {/* SECCIÓN 1: APARIENCIA */}
           <div>
             <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">
-              Apariencia
+              {t.appearance}
             </h3>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -118,14 +124,74 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${theme === "light" ? "bg-indigo-50 border-indigo-500 text-indigo-700" : "border-zinc-200 dark:border-[#27272A] text-zinc-500"}`}
               >
                 <Sun className="w-4 h-4" />
-                <span className="text-sm font-medium">Claro</span>
+                <span className="text-sm font-medium">{t.light}</span>
               </button>
               <button
                 onClick={() => setTheme("dark")}
                 className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${theme === "dark" ? "bg-[#27272A] border-[#6366F1] text-white" : "border-zinc-200 dark:border-[#27272A] text-zinc-500"}`}
               >
                 <Moon className="w-4 h-4" />
-                <span className="text-sm font-medium">Oscuro</span>
+                <span className="text-sm font-medium">{t.dark}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* SECCIÓN: IDIOMA (Con los 4 botones) */}
+          <div>
+            <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">
+              {t.language}
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              {/* ESPAÑOL */}
+              <button
+                onClick={() => setLanguage("es")}
+                className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
+                  language === "es"
+                    ? "bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300"
+                    : "border-zinc-200 dark:border-[#27272A] text-zinc-500"
+                }`}
+              >
+                <span className="text-lg">🇪🇸</span>
+                <span className="text-sm font-medium">Español</span>
+              </button>
+
+              {/* INGLÉS */}
+              <button
+                onClick={() => setLanguage("en")}
+                className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
+                  language === "en"
+                    ? "bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300"
+                    : "border-zinc-200 dark:border-[#27272A] text-zinc-500"
+                }`}
+              >
+                <span className="text-lg">🇬🇧</span>
+                <span className="text-sm font-medium">English</span>
+              </button>
+
+              {/* FRANCÉS */}
+              <button
+                onClick={() => setLanguage("fr")}
+                className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
+                  language === "fr"
+                    ? "bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300"
+                    : "border-zinc-200 dark:border-[#27272A] text-zinc-500"
+                }`}
+              >
+                <span className="text-lg">🇫🇷</span>
+                <span className="text-sm font-medium">Français</span>
+              </button>
+
+              {/* ALEMÁN */}
+              <button
+                onClick={() => setLanguage("de")}
+                className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
+                  language === "de"
+                    ? "bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300"
+                    : "border-zinc-200 dark:border-[#27272A] text-zinc-500"
+                }`}
+              >
+                <span className="text-lg">🇩🇪</span>
+                <span className="text-sm font-medium">Deutsch</span>
               </button>
             </div>
           </div>
@@ -133,7 +199,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           {/* SECCIÓN 2: PREFERENCIAS */}
           <div>
             <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">
-              Reloj
+              {t.clock}
             </h3>
             <div className="space-y-2">
               {/* Toggle 24h */}
@@ -141,7 +207,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="flex items-center gap-3">
                   <Clock className="w-4 h-4 text-[#6366F1]" />
                   <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
-                    Formato 24 Horas
+                    {t.format24}
                   </span>
                 </div>
                 <button
@@ -159,7 +225,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="flex items-center gap-3">
                   <Zap className="w-4 h-4 text-amber-400" />
                   <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
-                    Segundos
+                    {t.seconds}
                   </span>
                 </div>
                 <button
@@ -177,7 +243,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           {/* SECCIÓN 3: DATOS (Backup) */}
           <div>
             <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">
-              Datos y Backup
+              {t.data}
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -186,7 +252,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               >
                 <Download className="w-5 h-5 text-zinc-500 group-hover:text-[#6366F1]" />
                 <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                  Exportar JSON
+                  {t.export}
                 </span>
               </button>
 
@@ -196,7 +262,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               >
                 <Upload className="w-5 h-5 text-zinc-500 group-hover:text-[#6366F1]" />
                 <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                  Restaurar JSON
+                  {t.import}
                 </span>
               </button>
               {/* Input invisible para subir archivo */}

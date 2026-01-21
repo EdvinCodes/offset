@@ -4,10 +4,14 @@ import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
 import { X, Calendar, Clock, Copy, Check, Globe } from "lucide-react";
 import { useCityStore } from "@/store/useCityStore";
-import { format, addHours, startOfDay } from "date-fns";
+// 1. IMPORTAMOS EL TIPO 'Locale' AQUÍ
+import { format, addHours, startOfDay, type Locale } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
-import { es } from "date-fns/locale";
-import { toast } from "sonner"; // <--- 1. IMPORTAR TOAST
+import { toast } from "sonner";
+import { useTranslation } from "@/hooks/useTranslation";
+
+// Importar locales
+import { es, enUS, fr, de } from "date-fns/locale";
 
 interface MeetingPlannerModalProps {
   isOpen: boolean;
@@ -18,12 +22,17 @@ export default function MeetingPlannerModal({
   isOpen,
   onClose,
 }: MeetingPlannerModalProps) {
+  const { t, language } = useTranslation();
   const savedCities = useCityStore((state) => state.savedCities);
   const [baseDate, setBaseDate] = useState<Date>(new Date());
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Detectar si hay ciudades para mostrar la interfaz normal o el "Empty State"
+  // 2. CORREGIDO: Usamos Record<string, Locale> en lugar de 'any'
+  const dateLocales: Record<string, Locale> = { es, en: enUS, fr, de };
+
+  const currentLocale = dateLocales[language] || es;
+
   const hasCities = savedCities.length > 0;
 
   useEffect(() => {
@@ -62,7 +71,9 @@ export default function MeetingPlannerModal({
   const handleCopySummary = () => {
     if (selectedSlot === null) return;
     const selectedDate = hoursColumns[selectedSlot];
-    let text = `📅 Reunión propuesta: ${format(selectedDate, "dd/MM/yyyy")}\n\n`;
+
+    // TRADUCCIÓN: 'proposedMeeting'
+    let text = `📅 ${t.proposedMeeting || "Reunión"}: ${format(selectedDate, "dd/MM/yyyy")}\n\n`;
 
     savedCities.forEach((city) => {
       const cityTime = toZonedTime(selectedDate, city.timezone);
@@ -71,9 +82,9 @@ export default function MeetingPlannerModal({
 
     navigator.clipboard.writeText(text);
 
-    // --- 2. FEEDBACK VISUAL CON TOAST ---
-    toast.success("Resumen copiado", {
-      description: "Listo para pegar en tu email o calendario.",
+    // TRADUCCIÓN: 'summaryCopied'
+    toast.success(t.summaryCopied, {
+      description: t.summaryCopiedDesc,
       icon: "📋",
     });
 
@@ -91,7 +102,7 @@ export default function MeetingPlannerModal({
       />
 
       <div className="relative w-full max-w-5xl h-auto max-h-[92vh] sm:h-[85vh] bg-white dark:bg-[#18181B] border border-zinc-200 dark:border-[#27272A] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-200">
-        {/* HEADER (Común para ambos estados) */}
+        {/* HEADER */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 border-b border-zinc-200 dark:border-[#27272A] shrink-0 bg-white dark:bg-[#18181B] z-50 gap-4 sm:gap-0">
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="p-2 bg-indigo-100 dark:bg-indigo-500/10 rounded-lg text-indigo-600 dark:text-indigo-400 shrink-0">
@@ -99,16 +110,15 @@ export default function MeetingPlannerModal({
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white leading-tight">
-                Planificador de Reuniones
+                {t.plannerTitle}
               </h2>
               <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">
-                Encuentra el hueco perfecto cruzando zonas horarias
+                {t.plannerSubtitle}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
-            {/* Solo mostramos el date picker si hay ciudades */}
             {hasCities && (
               <div className="relative flex-1 sm:flex-none">
                 <input
@@ -130,14 +140,14 @@ export default function MeetingPlannerModal({
 
         {/* CONTENIDO PRINCIPAL */}
         {hasCities ? (
-          /* --- MODO NORMAL: GRID DE HORARIOS --- */
+          /* --- MODO NORMAL --- */
           <>
             <div className="flex-1 overflow-auto relative scrollbar-thin bg-white dark:bg-[#18181B]">
               <div className="min-w-[800px] sm:min-w-[1000px] p-4 sm:p-6">
                 {/* Cabecera Sticky */}
                 <div className="flex mb-2 sticky top-0 z-50 bg-white dark:bg-[#18181B] pb-2 shadow-sm border-b border-zinc-100 dark:border-zinc-800/50">
                   <div className="w-32 sm:w-48 shrink-0 font-bold text-zinc-400 text-[10px] sm:text-xs uppercase tracking-wider flex items-end pb-2 pl-2 truncate">
-                    Ciudades / Hora Local
+                    {t.citiesLocalTime} {/* TRADUCCIÓN */}
                   </div>
                   <div className="flex-1 grid grid-cols-[repeat(24,minmax(0,1fr))]">
                     {hoursColumns.map((date, i) => (
@@ -216,7 +226,10 @@ export default function MeetingPlannerModal({
                               <span className="font-semibold">{hour}</span>
                               {isNewDay && !isSelected && (
                                 <span className="absolute -top-2.5 left-0 text-[8px] sm:text-[9px] bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-100 px-1.5 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap z-20 pointer-events-none">
-                                  {format(cityTime, "dd MMM", { locale: es })}
+                                  {/* FECHA LOCALE DINÁMICA */}
+                                  {format(cityTime, "dd MMM", {
+                                    locale: currentLocale,
+                                  })}
                                 </span>
                               )}
                             </div>
@@ -231,15 +244,15 @@ export default function MeetingPlannerModal({
                 <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-xs text-zinc-500 dark:text-zinc-400 border-t border-zinc-200 dark:border-zinc-800 pt-4 bg-white dark:bg-[#18181B] sticky bottom-0 z-30 pb-2">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-emerald-500/20 border border-emerald-500/30"></div>
-                    <span>Horario Laboral (09 - 17)</span>
+                    <span>{t.business} (09 - 17)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-amber-500/20 border border-amber-500/30"></div>
-                    <span>Extendido (07-09 / 17-20)</span>
+                    <span>{t.extended} (07-09 / 17-20)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"></div>
-                    <span>Fuera de oficina</span>
+                    <span>{t.offHours}</span>
                   </div>
                 </div>
               </div>
@@ -254,10 +267,10 @@ export default function MeetingPlannerModal({
                   </div>
                   <div>
                     <p className="text-sm font-medium text-zinc-900 dark:text-white line-clamp-1">
-                      Hora seleccionada para la reunión
+                      {t.selectedTime}
                     </p>
                     <p className="text-xs text-zinc-500 line-clamp-1">
-                      Revisa la hora local de cada ciudad arriba
+                      {t.checkLocal}
                     </p>
                   </div>
                 </div>
@@ -271,29 +284,28 @@ export default function MeetingPlannerModal({
                   ) : (
                     <Copy className="w-4 h-4" />
                   )}
-                  {copied ? "¡Copiado!" : "Copiar Resumen"}
+                  {copied ? t.copied : t.copySummary}
                 </button>
               </div>
             )}
           </>
         ) : (
-          /* --- EMPTY STATE: CUANDO NO HAY CIUDADES --- */
+          /* --- EMPTY STATE --- */
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in-95 duration-300">
             <div className="w-20 h-20 rounded-full bg-zinc-100 dark:bg-[#27272A] flex items-center justify-center mb-6">
               <Globe className="w-10 h-10 text-zinc-400" />
             </div>
             <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">
-              No tienes ciudades guardadas
+              {t.noCities}
             </h3>
             <p className="text-zinc-500 dark:text-zinc-400 max-w-sm mb-8">
-              Para usar el planificador, primero necesitas añadir algunos
-              relojes a tu dashboard. Así podremos comparar sus zonas horarias.
+              {t.noCitiesDesc}
             </p>
             <button
               onClick={onClose}
               className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors shadow-lg shadow-indigo-500/20"
             >
-              Volver y añadir relojes
+              {t.back}
             </button>
           </div>
         )}

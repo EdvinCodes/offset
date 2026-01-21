@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
+// 1. Importar Locale type
+import { format, type Locale } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
-import { es } from "date-fns/locale";
+// 2. Importar locales soportados
+import { es, enUS, fr, de } from "date-fns/locale";
 import {
   Sun,
   Moon,
@@ -17,16 +19,16 @@ import {
   Loader2,
 } from "lucide-react";
 import { useSettingsStore } from "@/store/useSettingsStore";
+import { useTranslation } from "@/hooks/useTranslation"; // 3. Hook traducción
 
-// Interfaz extendida para soportar lo que viene de la API
 interface ClockCardProps {
   city: string;
   country: string;
   timezone: string;
   now: Date | null;
-  lat?: number; // Necesario para el clima
-  lng?: number; // Necesario para el clima
-  countryCode?: string; // Necesario para la bandera
+  lat?: number;
+  lng?: number;
+  countryCode?: string;
   isHero?: boolean;
   onDelete?: () => void;
 }
@@ -42,13 +44,18 @@ export default function ClockCard({
   isHero = false,
   onDelete,
 }: ClockCardProps) {
+  const { t, language } = useTranslation(); // 4. Usar hook
   const { use24HourFormat, showSeconds } = useSettingsStore();
   const [weather, setWeather] = useState<{ temp: number; code: number } | null>(
     null,
   );
   const [loadingWeather, setLoadingWeather] = useState(false);
 
-  // FETCH CLIMA (Solo si tenemos lat/lng y no es hero -para no saturar- o si quieres en todos)
+  // 5. Configurar locale dinámico
+  const dateLocales: Record<string, Locale> = { es, en: enUS, fr, de };
+  const currentLocale = dateLocales[language] || es;
+
+  // FETCH CLIMA
   useEffect(() => {
     if (!lat || !lng) return;
 
@@ -73,12 +80,10 @@ export default function ClockCard({
     };
 
     fetchWeather();
-    // Refrescar clima cada 30 min
     const interval = setInterval(fetchWeather, 1000 * 60 * 30);
     return () => clearInterval(interval);
   }, [lat, lng]);
 
-  // Helper para iconos de clima
   const getWeatherIcon = (code: number) => {
     if (code <= 1) return <Sun className="w-4 h-4 text-amber-500" />;
     if (code <= 3) return <Cloud className="w-4 h-4 text-zinc-400" />;
@@ -103,7 +108,8 @@ export default function ClockCard({
   const timeString = format(zonedDate, timeFormat);
   const period = use24HourFormat ? "" : format(zonedDate, "aa");
   const secondsString = format(zonedDate, "ss");
-  const dateString = format(zonedDate, "EEE, d MMM", { locale: es });
+  // 6. Usar currentLocale para la fecha
+  const dateString = format(zonedDate, "EEE, d MMM", { locale: currentLocale });
 
   const localHours = parseInt(format(now, "H"));
   const targetHours = parseInt(format(zonedDate, "H"));
@@ -111,7 +117,9 @@ export default function ClockCard({
   if (diff > 12) diff -= 24;
   if (diff < -12) diff += 24;
 
-  const offsetString = diff === 0 ? "Local" : `${diff > 0 ? "+" : ""}${diff}h`;
+  // 7. Usar traducción para "Local"
+  const offsetString =
+    diff === 0 ? t.localTime : `${diff > 0 ? "+" : ""}${diff}h`;
   const hour = parseInt(format(zonedDate, "H"));
   const isDay = hour >= 6 && hour < 18;
 
@@ -148,7 +156,6 @@ export default function ClockCard({
           </div>
 
           <div className="flex items-center gap-2 mt-1">
-            {/* BANDERA (Si existe countryCode) */}
             {countryCode && (
               <Image
                 src={`https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png`}
@@ -166,7 +173,6 @@ export default function ClockCard({
 
         {/* --- WIDGET CLIMA --- */}
         <div className="flex flex-col items-end gap-1">
-          {/* Botón Borrar (arriba del todo) */}
           {onDelete && (
             <button
               onClick={(e) => {
@@ -179,7 +185,6 @@ export default function ClockCard({
             </button>
           )}
 
-          {/* Info Clima */}
           {weather ? (
             <div className="flex items-center gap-1.5 mt-1 bg-zinc-50 dark:bg-white/5 px-2 py-1 rounded-full border border-zinc-100 dark:border-white/5">
               {getWeatherIcon(weather.code)}
@@ -222,7 +227,6 @@ export default function ClockCard({
             {dateString}
           </p>
 
-          {/* ICONO DÍA/NOCHE */}
           <div className="opacity-50 group-hover:opacity-100 transition-opacity">
             {isDay ? (
               <Sun className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500/80" />

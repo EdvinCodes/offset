@@ -11,6 +11,7 @@ import { City } from "@/data/cities";
 import { useTime } from "@/hooks/useTime";
 import { toZonedTime, format } from "date-fns-tz";
 import { Plus, Minus, RotateCcw } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation"; // 1. IMPORTAR HOOK
 
 interface WorldFeature {
   type: "Feature";
@@ -34,6 +35,7 @@ export default function WorldMap({
   className = "",
   time,
 }: WorldMapProps) {
+  const { t } = useTranslation(); // 2. USAR HOOK
   const internalTime = useTime();
   const now = time || internalTime;
 
@@ -76,7 +78,7 @@ export default function WorldMap({
   }, []);
 
   useEffect(() => {
-    if (!svgRef.current || !gRef.current || !worldData) return; // Añadido check de worldData
+    if (!svgRef.current || !gRef.current || !worldData) return;
 
     const svg = d3Selection.select(svgRef.current);
     const g = d3Selection.select(gRef.current);
@@ -95,10 +97,7 @@ export default function WorldMap({
 
     zoomBehavior.current = zoom;
     svg.call(zoom);
-
-    // Si ya teníamos un zoom previo (por si recarga datos), lo restauramos o reseteamos si es necesario.
-    // D3 mantiene el estado interno en el nodo DOM, así que esto suele ser suficiente.
-  }, [dimensions, worldData]); // <--- AQUÍ ESTÁ LA CLAVE: Añadir worldData
+  }, [dimensions, worldData]);
 
   const handleZoomIn = () => {
     if (svgRef.current && zoomBehavior.current) {
@@ -190,7 +189,7 @@ export default function WorldMap({
             />
           )}
 
-          {/* CAPA 3: PUNTOS (Ajustamos radio y stroke con currentK) */}
+          {/* CAPA 3: PUNTOS */}
           {cities.map((city) => {
             if (!city.lat || !city.lng) return null;
             const [x, y] = projection([city.lng, city.lat]) || [0, 0];
@@ -228,7 +227,7 @@ export default function WorldMap({
             );
           })}
 
-          {/* CAPA 4: TOOLTIP (Escala inversa 1/currentK) */}
+          {/* CAPA 4: TOOLTIP */}
           {activeCity && activeCity.lat && activeCity.lng && (
             <g>
               {(() => {
@@ -318,7 +317,8 @@ export default function WorldMap({
       </div>
 
       <div className="absolute bottom-4 left-6 px-3 py-1 rounded-full bg-white/80 dark:bg-black/40 backdrop-blur-md border border-zinc-200 dark:border-white/5 text-[10px] text-zinc-600 dark:text-zinc-500 uppercase tracking-widest pointer-events-none">
-        Interactive Map
+        {/* 3. TEXTO TRADUCIDO */}
+        {t.interactiveMap}
       </div>
     </div>
   );
