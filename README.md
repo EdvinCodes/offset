@@ -1,21 +1,25 @@
 # offset.
 
+> The modern way to coordinate global time. A minimalist world clock and meeting planner designed with "Technical Glass" aesthetics, performance, and privacy in mind.
+
+![Offset Preview](./public/preview.png)
+
 ![Project Status](https://img.shields.io/badge/status-active-success)
 ![Next.js](https://img.shields.io/badge/Next.js-15%2B-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38bdf8)
-
-**The modern way to coordinate global time.** Offset is a minimalist world clock, meeting planner, and timezone converter designed with a focus on aesthetics ("Technical Glass"), performance, and privacy.
+![PWA](https://img.shields.io/badge/PWA-Ready-purple)
 
 ## ✨ Features
 
-- **🧠 Smart Auto-Location:** Automatically detects your city, weather, and time via IP (with GPS fallback) using `ipwho.is`.
-- **📅 Meeting Planner:** Interactive 24h grid to find overlapping business hours across timezones. Includes color-coded availability (Business/Extended/Night) and a "Copy Summary" feature.
-- **🌍 Global Search:** Search any city in the world using the Open-Meteo Geocoding API. Includes disambiguation (e.g., handling "Paris, Texas" vs "Paris, France").
-- **drag & Drop Dashboard:** Reorder your clocks easily with a smooth, animated interface.
-- **☁️ Real-Time Weather:** Live temperature and condition icons for every saved city.
-- **🎨 Technical Glass Aesthetic:** Deep "Zinc" dark mode with subtle glows, blurs, and skeletons for loading states.
-- **💾 Local-First Persistence:** All settings and cities are saved instantly to your browser's `localStorage`. No login required.
+- 🧠 **Smart Auto-Location:** Automatically detects your city, weather, and time via IP (with GPS fallback) using `ipwho.is`.
+- 📅 **Meeting Planner:** Interactive 24h grid to find overlapping business hours across timezones. Includes color-coded availability.
+- 🌍 **Global Search:** Search any city in the world using the Open-Meteo Geocoding API.
+- 🛡️ **Backup & Restore:** Export your saved cities and configuration to a JSON file and restore them on any device.
+- 📱 **PWA Ready:** Install Offset as a native app on iOS and Android. Works offline.
+- 🌗 **Adaptive Themes:** Seamlessly switch between Light and Dark modes.
+- ☁️ **Real-Time Weather:** Live temperature and condition icons for every saved city.
+- 💾 **Local-First Persistence:** All settings are saved instantly to `localStorage`. No login required.
 
 ## 🛠️ Tech Stack
 
@@ -24,32 +28,39 @@
 - **Interactions:** [dnd-kit](https://dndkit.com/) (Drag & Drop)
 - **State Management:** [Zustand](https://github.com/pmndrs/zustand)
 - **Time Logic:** `date-fns` & `date-fns-tz`
-- **Data Sources:** - Geocoding & Weather: [Open-Meteo](https://open-meteo.com/)
-  - IP Location: [ipwho.is](https://ipwho.is/)
-  - Flags: [FlagCDN](https://flagcdn.com/)
+- **Data Sources:** Open-Meteo, ipwho.is, FlagCDN.
 
 ## 🚀 Getting Started
 
-First, clone the repository:
+This project is built with Next.js and requires no external backend database (Local-First).
+
+### Prerequisites
+
+1. **Node.js** (v18 or higher)
+2. **npm** or **pnpm**
+
+### Installation
+
+1. Clone the repo:
 
 ```bash
 git clone https://github.com/EdvinCodes/offset.git
 cd offset
 ```
 
-Install the dependencies:
+2. Install dependencies:
 
 ```bash
 npm install
 ```
 
-Run the development server:
+3. Run the development server:
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open [http://localhost:3000](http://localhost:3000) with your browser.
 
 ## 🗺️ Roadmap
 
@@ -66,3 +77,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 ## 📄 License
 
 This project is open source and available under the [MIT License](https://www.google.com/search?q=LICENSE).
+
+---
+
+Developed with ❤️ by [Edvin](https://github.com/EdvinCodes)
