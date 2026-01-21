@@ -14,7 +14,7 @@ interface GeocodingResult {
   country: string;
   timezone?: string;
   admin1?: string;
-  country_code: string; // <--- NUEVO: Necesitamos esto para banderas/monedas
+  country_code: string;
 }
 
 interface SearchModalProps {

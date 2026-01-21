@@ -9,7 +9,14 @@ export default function DashboardSkeleton() {
         <div className="opacity-50">
           <Logo className="scale-75 sm:scale-100 origin-left grayscale" />
         </div>
-        <Skeleton className="w-10 h-10 sm:w-12 sm:h-12 rounded-full" />
+
+        {/* BOTONERA SKELETON (Ahora son 2 botones) */}
+        <div className="flex items-center gap-3">
+          <Skeleton className="w-10 h-10 sm:w-12 sm:h-12 rounded-full" />{" "}
+          {/* Planner */}
+          <Skeleton className="w-10 h-10 sm:w-12 sm:h-12 rounded-full" />{" "}
+          {/* Settings */}
+        </div>
       </header>
 
       {/* 2. Map Skeleton */}

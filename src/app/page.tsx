@@ -27,10 +27,9 @@ import { TimeSlider } from "@/components/dashboard/TimeSlider";
 import { SortableItem } from "@/components/dashboard/SortableItem";
 import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import { Logo } from "@/components/ui/Logo";
-import { INITIAL_CITIES, City } from "@/data/cities";
-import { AVAILABLE_CITIES } from "@/data/allCities";
+import { City, AVAILABLE_CITIES } from "@/data/cities";
 import { useCityStore } from "@/store/useCityStore";
-import { Plus, CalendarRange } from "lucide-react"; // <--- IMPORTANTE (Icono)
+import { Plus, CalendarRange } from "lucide-react";
 
 export default function Home() {
   const realTime = useTime();
@@ -38,12 +37,20 @@ export default function Home() {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isPlannerOpen, setIsPlannerOpen] = useState(false); // <--- NUEVO ESTADO
+  const [isPlannerOpen, setIsPlannerOpen] = useState(false);
 
   const { savedCities, removeCity, reorderCities } = useCityStore();
 
   const [isLoaded, setIsLoaded] = useState(false);
-  const [heroCity, setHeroCity] = useState<City>(INITIAL_CITIES[0]);
+  const [heroCity, setHeroCity] = useState<City>({
+    id: "loading",
+    name: "Cargando...",
+    country: "...",
+    timezone: "UTC",
+    lat: 0,
+    lng: 0,
+    countryCode: "US", // O lo que quieras por defecto
+  });
 
   const simulatedTime = realTime
     ? new Date(realTime.getTime() + timeOffset * 60 * 1000)

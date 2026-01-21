@@ -7,7 +7,6 @@ interface CityStore {
   addCity: (city: City) => void;
   removeCity: (cityId: string) => void;
   reorderCities: (newOrder: City[]) => void;
-  // NUEVO: Función para restaurar backup completo
   restoreBackup: (cities: City[]) => void;
 }
 
