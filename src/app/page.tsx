@@ -16,12 +16,13 @@ import {
   sortableKeyboardCoordinates,
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
+import { toast } from "sonner"; // <--- 1. IMPORTAR TOAST
 
 import { useTime } from "@/hooks/useTime";
 import ClockCard from "@/components/dashboard/ClockCard";
 import SearchModal from "@/components/dashboard/SearchModal";
 import SettingsModal from "@/components/dashboard/SettingsModal";
-import MeetingPlannerModal from "@/components/dashboard/MeetingPlannerModal"; // <--- IMPORTANTE
+import MeetingPlannerModal from "@/components/dashboard/MeetingPlannerModal";
 import WorldMap from "@/components/dashboard/WorldMap";
 import { TimeSlider } from "@/components/dashboard/TimeSlider";
 import { SortableItem } from "@/components/dashboard/SortableItem";
@@ -43,7 +44,7 @@ export default function Home() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPlannerOpen, setIsPlannerOpen] = useState(false);
 
-  const { savedCities, removeCity, reorderCities, overrideCities } =
+  const { savedCities, removeCity, reorderCities, overrideCities, addCity } =
     useCityStore();
   const searchParams = useSearchParams();
 
@@ -55,7 +56,7 @@ export default function Home() {
     timezone: "UTC",
     lat: 0,
     lng: 0,
-    countryCode: "US", // O lo que quieras por defecto
+    countryCode: "US",
   });
 
   const simulatedTime = realTime
@@ -71,23 +72,29 @@ export default function Home() {
 
   // --- NUEVA LÓGICA: LEER URL COMPARTIDA ---
   useEffect(() => {
-    // Solo ejecutamos si hay parametros en la URL
-    if (searchParams.size > 0) {
+    // Añadimos isLoaded para asegurar que la app está lista antes de sobreescribir
+    if (searchParams.size > 0 && isLoaded) {
       const sharedCities = parseShareUrl(searchParams);
 
       if (sharedCities && sharedCities.length > 0) {
-        // 1. Sobreescribimos el estado local con lo compartido
         overrideCities(sharedCities);
 
-        // 2. Limpiamos la URL para quitar el chorizo de base64 (?d=...)
-        // Usamos window.history para no recargar la página
         const newUrl = window.location.pathname;
         window.history.replaceState({}, "", newUrl);
 
-        // Opcional: Podrías poner aquí un toast/aviso: "Dashboard cargado desde enlace compartido"
+        // 2. TOAST DE ÉXITO AL CARGAR URL
+        toast.success("Dashboard compartido cargado", {
+          description: "Se han importado los relojes correctamente.",
+          icon: "🔗",
+        });
+      } else if (searchParams.get("d")) {
+        // Opcional: Avisar si el link está roto
+        toast.error("Enlace no válido", {
+          description: "No se pudieron cargar los datos compartidos.",
+        });
       }
     }
-  }, [searchParams, overrideCities]);
+  }, [searchParams, overrideCities, isLoaded]);
 
   // --- LÓGICA DE UBICACIÓN (CON CACHÉ Y API ipwho.is) ---
   useEffect(() => {
@@ -182,6 +189,23 @@ export default function Home() {
     }
   }
 
+  // --- 3. HELPER PARA BORRAR CON TOAST ---
+  const handleRemoveCity = (cityToDelete: City) => {
+    // Primero la borramos del estado
+    removeCity(cityToDelete.id);
+
+    // Mostramos el toast con la opción de Deshacer
+    toast.info("Reloj eliminado", {
+      description: `${cityToDelete.name} se ha quitado del dashboard.`,
+      // AQUÍ ESTÁ LA MAGIA DE SONNER
+      action: {
+        label: "Deshacer",
+        onClick: () => addCity(cityToDelete), // Si pulsa, la volvemos a añadir
+      },
+      duration: 4000, // Damos un poco más de tiempo para reaccionar
+    });
+  };
+
   // --- RENDERIZADO ---
 
   if (!isLoaded) {
@@ -272,7 +296,8 @@ export default function Home() {
                   lat={city.lat}
                   lng={city.lng}
                   countryCode={city.countryCode}
-                  onDelete={() => removeCity(city.id)}
+                  // AQUÍ USAMOS LA NUEVA FUNCIÓN CON TOAST
+                  onDelete={() => handleRemoveCity(city)}
                 />
               </SortableItem>
             ))}

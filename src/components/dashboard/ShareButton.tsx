@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Share2, Check } from "lucide-react";
 import { useCityStore } from "@/store/useCityStore";
 import { generateShareUrl } from "@/lib/share";
+import { toast } from "sonner"; // <--- 1. IMPORTAR TOAST
 
 export default function ShareButton() {
   const savedCities = useCityStore((state) => state.savedCities);
@@ -15,10 +16,18 @@ export default function ShareButton() {
 
     try {
       await navigator.clipboard.writeText(url);
+
+      // --- 2. FEEDBACK VISUAL ---
+      toast.success("Enlace copiado", {
+        description: "Comparte esta URL para clonar tu dashboard.",
+        icon: "🔗",
+      });
+
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy", err);
+      toast.error("Error al copiar");
     }
   };
 

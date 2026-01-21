@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
-import { X, Calendar, Clock, Copy, Check, Globe } from "lucide-react"; // Añadido Globe
+import { X, Calendar, Clock, Copy, Check, Globe } from "lucide-react";
 import { useCityStore } from "@/store/useCityStore";
 import { format, addHours, startOfDay } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { es } from "date-fns/locale";
+import { toast } from "sonner"; // <--- 1. IMPORTAR TOAST
 
 interface MeetingPlannerModalProps {
   isOpen: boolean;
@@ -69,6 +70,13 @@ export default function MeetingPlannerModal({
     });
 
     navigator.clipboard.writeText(text);
+
+    // --- 2. FEEDBACK VISUAL CON TOAST ---
+    toast.success("Resumen copiado", {
+      description: "Listo para pegar en tu email o calendario.",
+      icon: "📋",
+    });
+
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

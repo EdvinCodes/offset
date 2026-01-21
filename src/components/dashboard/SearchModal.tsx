@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { X, Search, Plus, Check, Loader2, MapPin } from "lucide-react";
 import { useCityStore } from "@/store/useCityStore";
 import { City } from "@/data/cities";
+import { toast } from "sonner"; // <--- 1. IMPORTAR
 
 interface GeocodingResult {
   id: number;
@@ -71,8 +72,6 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
               timezone: item.timezone!,
               lat: item.latitude,
               lng: item.longitude,
-              // AQUI GUARDAMOS EL CÓDIGO DE PAÍS (ej: "ES")
-              // Lo usaremos para la bandera y moneda en la tarjeta
               countryCode: item.country_code,
             };
           },
@@ -89,9 +88,6 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     }
   };
 
-  // ... (El resto del componente useEffect de ESC y handleAdd sigue igual)
-  // Solo pego la parte renderizada para ahorrar espacio, el resto de lógica no cambia
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -102,6 +98,13 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
   const handleAdd = (city: City) => {
     addCity(city);
+
+    // --- 2. FEEDBACK VISUAL ---
+    toast.success("Ciudad añadida", {
+      description: `${city.name} ahora está en tu dashboard.`,
+      icon: "🌍",
+    });
+
     onClose();
     setSearchTerm("");
     setResults([]);
@@ -170,7 +173,6 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                             {city.name}
                           </h3>
                           <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-[#A1A1AA] truncate">
-                            {/* Bandera simple basada en código de país */}
                             {city.countryCode && (
                               <Image
                                 src={`https://flagcdn.com/20x15/${city.countryCode.toLowerCase()}.png`}

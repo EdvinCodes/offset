@@ -5,6 +5,7 @@ import { X, Clock, Zap, Moon, Sun, Download, Upload } from "lucide-react";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { useCityStore } from "@/store/useCityStore";
 import { useTheme } from "next-themes";
+import { toast } from "sonner"; // <--- 1. IMPORTAR TOAST
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -17,7 +18,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { savedCities, restoreBackup } = useCityStore();
   const { theme, setTheme } = useTheme();
 
-  // Referencia para el input de archivo oculto
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -30,16 +30,23 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   // --- FUNCIÓN EXPORTAR ---
   const handleExport = () => {
-    const dataStr = JSON.stringify(savedCities, null, 2);
-    const dataUri =
-      "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+    try {
+      const dataStr = JSON.stringify(savedCities, null, 2);
+      const dataUri =
+        "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
 
-    const exportFileDefaultName = `offset-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      const exportFileDefaultName = `offset-backup-${new Date().toISOString().slice(0, 10)}.json`;
 
-    const linkElement = document.createElement("a");
-    linkElement.setAttribute("href", dataUri);
-    linkElement.setAttribute("download", exportFileDefaultName);
-    linkElement.click();
+      const linkElement = document.createElement("a");
+      linkElement.setAttribute("href", dataUri);
+      linkElement.setAttribute("download", exportFileDefaultName);
+      linkElement.click();
+
+      // Feedback visual bonito
+      toast.success("Configuración exportada correctamente");
+    } catch {
+      toast.error("Error al exportar la configuración");
+    }
   };
 
   // --- FUNCIÓN IMPORTAR ---
@@ -47,20 +54,33 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     const fileReader = new FileReader();
     if (e.target.files && e.target.files.length > 0) {
       fileReader.readAsText(e.target.files[0], "UTF-8");
+
       fileReader.onload = (event) => {
         try {
           const json = JSON.parse(event.target?.result as string);
+
           if (Array.isArray(json)) {
             restoreBackup(json);
-            alert("¡Backup restaurado con éxito!");
+            // 2. USAR TOAST DE ÉXITO
+            toast.success("Backup restaurado con éxito", {
+              description: "Tus relojes han sido actualizados.",
+            });
             onClose();
           } else {
-            alert("El archivo no parece válido.");
+            // 3. USAR TOAST DE ERROR
+            toast.error("Archivo inválido", {
+              description: "El formato del JSON no es compatible.",
+            });
           }
         } catch {
-          alert("Error al leer el archivo JSON.");
+          toast.error("Error de lectura", {
+            description: "No se pudo procesar el archivo seleccionado.",
+          });
         }
       };
+
+      // Resetear el input para permitir subir el mismo archivo dos veces si falla
+      e.target.value = "";
     }
   };
 
