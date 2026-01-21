@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { X, Search, Plus, Check, Loader2, MapPin } from "lucide-react";
 import { useCityStore } from "@/store/useCityStore";
@@ -11,9 +12,9 @@ interface GeocodingResult {
   latitude: number;
   longitude: number;
   country: string;
-  timezone?: string; // Puede ser undefined en países
+  timezone?: string;
   admin1?: string;
-  feature_code?: string; // Para identificar si es país (PCLI) o ciudad
+  country_code: string; // <--- NUEVO: Necesitamos esto para banderas/monedas
 }
 
 interface SearchModalProps {
@@ -37,7 +38,6 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
         setIsLoading(false);
       }
     }, 500);
-
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
@@ -51,23 +51,16 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
       const data = await response.json();
 
       if (data.results) {
-        // --- FILTRADO CLAVE ---
-        const validResults = data.results.filter((item: GeocodingResult) => {
-          // 1. Debe tener timezone (esto elimina el país "México" que daba error)
-          if (!item.timezone) return false;
-          // 2. Opcional: Podríamos filtrar feature_code === 'PCLI' si quisiéramos ser más estrictos
-          return true;
-        });
+        const validResults = data.results.filter(
+          (item: GeocodingResult) => item.timezone,
+        );
 
         const mappedCities: City[] = validResults.map(
           (item: GeocodingResult) => {
-            // Construimos el subtítulo inteligente
-            // Si hay región (admin1) y es diferente al nombre de la ciudad, la mostramos
             const parts = [];
             if (item.admin1 && item.admin1 !== item.name)
               parts.push(item.admin1);
             if (item.country) parts.push(item.country);
-
             const detailedLocation =
               parts.join(", ") || "Ubicación desconocida";
 
@@ -75,9 +68,12 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
               id: item.id.toString(),
               name: item.name,
               country: detailedLocation,
-              timezone: item.timezone!, // El ! es seguro gracias al filter de arriba
+              timezone: item.timezone!,
               lat: item.latitude,
               lng: item.longitude,
+              // AQUI GUARDAMOS EL CÓDIGO DE PAÍS (ej: "ES")
+              // Lo usaremos para la bandera y moneda en la tarjeta
+              countryCode: item.country_code,
             };
           },
         );
@@ -92,6 +88,9 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
       setIsLoading(false);
     }
   };
+
+  // ... (El resto del componente useEffect de ESC y handleAdd sigue igual)
+  // Solo pego la parte renderizada para ahorrar espacio, el resto de lógica no cambia
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -116,15 +115,13 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
         className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
-
       <div className="relative w-full max-w-2xl bg-white dark:bg-[#18181B] border border-zinc-200 dark:border-[#27272A] rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[70vh]">
-        {/* Header */}
         <div className="flex items-center gap-4 p-4 border-b border-zinc-200 dark:border-[#27272A] shrink-0">
           <Search className="w-5 h-5 text-zinc-400 dark:text-[#A1A1AA]" />
           <input
             autoFocus
             type="text"
-            placeholder="Buscar ciudad (ej: Ciudad de México, Tokio)..."
+            placeholder="Buscar ciudad (ej: Buenos Aires, Berlín)..."
             className="flex-1 bg-transparent text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-[#52525B] outline-none text-lg"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -136,8 +133,6 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
             <X className="w-5 h-5 text-zinc-400 dark:text-[#A1A1AA]" />
           </button>
         </div>
-
-        {/* Resultados */}
         <div className="overflow-y-auto p-2 scrollbar-thin min-h-[150px] relative">
           {isLoading ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-400 gap-3">
@@ -152,13 +147,11 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   <p>Escribe al menos 3 letras</p>
                 </div>
               )}
-
               {searchTerm.length >= 3 && results.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-zinc-500 dark:text-[#52525B] py-8">
                   <p>{`No encontramos "${searchTerm}"`}</p>
                 </div>
               )}
-
               {results.length > 0 && (
                 <div className="space-y-1">
                   {results.map((city) => {
@@ -177,6 +170,16 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                             {city.name}
                           </h3>
                           <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-[#A1A1AA] truncate">
+                            {/* Bandera simple basada en código de país */}
+                            {city.countryCode && (
+                              <Image
+                                src={`https://flagcdn.com/20x15/${city.countryCode.toLowerCase()}.png`}
+                                alt="flag"
+                                width={20}
+                                height={15}
+                                className="w-4 h-3 object-cover rounded-[1px] opacity-80"
+                              />
+                            )}
                             <span>{city.country}</span>
                             <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 rounded text-zinc-400 shrink-0">
                               {city.timezone}
@@ -199,8 +202,6 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
             </>
           )}
         </div>
-
-        {/* Footer */}
         <div className="p-3 bg-zinc-50 dark:bg-[#09090B] border-t border-zinc-200 dark:border-[#27272A] text-[10px] sm:text-xs text-zinc-500 dark:text-[#52525B] flex justify-between items-center shrink-0 px-4">
           <span>Búsqueda global por Open-Meteo</span>
           <span className="hidden sm:inline">

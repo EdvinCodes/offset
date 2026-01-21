@@ -3,34 +3,47 @@ export interface City {
   name: string;
   country: string;
   timezone: string;
-  lat?: number; // Opcional por ahora para no romper el build
-  lng?: number;
+  lat?: number; // Coordenadas para el clima
+  lng?: number; // Coordenadas para el clima
+  countryCode?: string; // Código ISO para la bandera (ej: "ES", "US")
 }
 
-// Actualiza INITIAL_CITIES con coordenadas (Ejemplo rápido)
+// Datos iniciales actualizados con coordenadas y códigos de país
 export const INITIAL_CITIES: City[] = [
   {
-    id: "mad",
+    id: "1",
     name: "Madrid",
-    country: "Spain",
+    country: "España",
     timezone: "Europe/Madrid",
-    lat: 40.4168,
-    lng: -3.7038,
+    lat: 40.4165,
+    lng: -3.7026,
+    countryCode: "ES",
   },
   {
-    id: "nyc",
+    id: "2",
     name: "New York",
-    country: "US",
+    country: "Estados Unidos",
     timezone: "America/New_York",
-    lat: 40.7128,
+    lat: 40.7143,
     lng: -74.006,
+    countryCode: "US",
   },
   {
-    id: "tyo",
+    id: "3",
     name: "Tokyo",
-    country: "JP",
+    country: "Japón",
     timezone: "Asia/Tokyo",
-    lat: 35.6762,
-    lng: 139.6503,
+    lat: 35.6895,
+    lng: 139.6917,
+    countryCode: "JP",
+  },
+  {
+    id: "4",
+    name: "Sydney",
+    country: "Australia",
+    timezone: "Australia/Sydney",
+    lat: -33.8678,
+    lng: 151.2073,
+    countryCode: "AU",
   },
 ];
