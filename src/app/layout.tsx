@@ -6,8 +6,33 @@ import { ThemeProvider } from "@/components/theme-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Offset | World Clock",
-  description: "A beautiful time zone converter and world clock.",
+  title: {
+    default: "Offset | World Clock",
+    template: "%s | Offset",
+  },
+  description:
+    "A beautiful time zone converter and world clock for remote teams.",
+  // Esto ayuda a los iconos del navegador
+  icons: {
+    icon: "/favicon.ico", // Asegúrate de tener un favicon en /public
+  },
+  // Configuración para Redes Sociales (Facebook, WhatsApp, LinkedIn)
+  openGraph: {
+    title: "Offset | World Clock",
+    description:
+      "The modern way to coordinate global time. Local-first & Privacy focused.",
+    url: "https://offset-tau.vercel.app/", // TU URL REAL AQUÍ
+    siteName: "Offset",
+    locale: "en_US",
+    type: "website",
+  },
+  // Configuración para Twitter/X
+  twitter: {
+    card: "summary_large_image",
+    title: "Offset | World Clock",
+    description: "The modern way to coordinate global time.",
+    // images: ['https://tu-web.com/og-image.png'], // Igual, automático con Solución 1
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
