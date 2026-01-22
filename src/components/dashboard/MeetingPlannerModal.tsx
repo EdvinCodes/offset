@@ -1,25 +1,27 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   X,
-  Calendar,
+  Calendar as CalendarIcon,
   Clock,
   Copy,
   Check,
   Globe,
   Download,
   ExternalLink,
-} from "lucide-react"; // Nuevos iconos
+} from "lucide-react";
 import { useCityStore } from "@/store/useCityStore";
 import { City, AVAILABLE_CITIES } from "@/data/cities";
 import { format, addHours, startOfDay, type Locale } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
-// Importamos nuestra nueva utilidad
 import { generateGoogleCalendarUrl, downloadICSFile } from "@/lib/calendar";
+
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
 
 import { es, enUS, fr, de } from "date-fns/locale";
 
@@ -45,12 +47,29 @@ export default function MeetingPlannerModal({
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
 
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const calendarRef = useRef<HTMLDivElement>(null);
+
   const dateLocales: Record<string, Locale> = { es, en: enUS, fr, de };
   const currentLocale = dateLocales[language] || es;
 
   const hasSavedCities = savedCities.length > 0;
 
-  // --- ESCUDO: FUNCIÓN DE TIEMPO SEGURO ---
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        calendarRef.current &&
+        !calendarRef.current.contains(event.target as Node)
+      ) {
+        setIsCalendarOpen(false);
+      }
+    };
+    if (isCalendarOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isCalendarOpen]);
+
   const getSafeZonedTime = (date: Date, tz: string) => {
     try {
       return toZonedTime(date, tz);
@@ -93,8 +112,6 @@ export default function MeetingPlannerModal({
       : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border-zinc-200 dark:border-zinc-700";
   };
 
-  // --- GENERADOR DE TEXTO COMÚN ---
-  // Extraemos esto a una función para usarlo en Copiar, Google y ICS
   const generateMeetingDetails = (date: Date) => {
     let text = "";
     allParticipants.forEach((city) => {
@@ -127,7 +144,6 @@ export default function MeetingPlannerModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // --- NUEVO: HANDLER GOOGLE ---
   const handleGoogleCalendar = () => {
     if (selectedSlot === null) return;
     const selectedDate = hoursColumns[selectedSlot];
@@ -138,7 +154,6 @@ export default function MeetingPlannerModal({
     window.open(url, "_blank");
   };
 
-  // --- NUEVO: HANDLER ICS ---
   const handleDownloadICS = () => {
     if (selectedSlot === null) return;
     const selectedDate = hoursColumns[selectedSlot];
@@ -160,10 +175,10 @@ export default function MeetingPlannerModal({
 
       <div className="relative w-full max-w-5xl h-auto max-h-[92vh] sm:h-[85vh] bg-white dark:bg-[#18181B] border border-zinc-200 dark:border-[#27272A] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-200">
         {/* HEADER */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 border-b border-zinc-200 dark:border-[#27272A] shrink-0 bg-white dark:bg-[#18181B] z-50 gap-4 sm:gap-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 border-b border-zinc-200 dark:border-[#27272A] shrink-0 bg-white dark:bg-[#18181B] z-[60] gap-4 sm:gap-0 relative">
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="p-2 bg-indigo-100 dark:bg-indigo-500/10 rounded-lg text-indigo-600 dark:text-indigo-400 shrink-0">
-              <Calendar className="w-5 h-5 sm:w-6 sm:h-6" />
+              <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white leading-tight">
@@ -177,15 +192,93 @@ export default function MeetingPlannerModal({
 
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
             {hasSavedCities && (
-              <div className="relative flex-1 sm:flex-none">
-                <input
-                  type="date"
-                  value={format(baseDate, "yyyy-MM-dd")}
-                  onChange={(e) => setBaseDate(new Date(e.target.value))}
-                  className="w-full sm:w-auto bg-zinc-100 dark:bg-[#27272A] border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+              <div className="relative flex-1 sm:flex-none" ref={calendarRef}>
+                <button
+                  onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                  className={`
+                    w-full sm:w-auto flex items-center justify-between sm:justify-center gap-2 
+                    bg-zinc-100 dark:bg-[#27272A] 
+                    border border-zinc-200 dark:border-zinc-700 
+                    text-zinc-900 dark:text-white 
+                    text-sm rounded-lg px-3 py-2 
+                    transition-all hover:bg-zinc-200 dark:hover:bg-zinc-700
+                    ${isCalendarOpen ? "ring-2 ring-indigo-500 border-indigo-500" : ""}
+                  `}
+                >
+                  <span className="font-medium">
+                    {format(baseDate, "EEE, d MMMM yyyy", {
+                      locale: currentLocale,
+                    })}
+                  </span>
+                  <CalendarIcon className="w-4 h-4 text-zinc-500" />
+                </button>
+
+                {isCalendarOpen && (
+                  // POPUP: CORREGIDO POSICIONAMIENTO RESPONSIVE
+                  <div
+                    className={`
+                    absolute top-full mt-2 z-[100] p-4 
+                    bg-white dark:bg-[#18181B] 
+                    border border-zinc-200 dark:border-[#27272A] 
+                    rounded-xl shadow-2xl animate-in fade-in zoom-in-95
+                    
+                    /* Mobile: Centrado */
+                    left-1/2 -translate-x-1/2
+                    
+                    /* Desktop: Alineado a la derecha (reseteamos el centrado) */
+                    sm:left-auto sm:right-0 sm:translate-x-0
+                  `}
+                  >
+                    <style>{`
+                      .rdp { margin: 0; }
+                      .rdp-caption_label { font-size: 0.9rem; font-weight: 700; color: inherit; text-transform: capitalize; }
+                      
+                      /* Botones de navegación (Flechas) */
+                      .rdp-nav_button { 
+                        width: 32px; height: 32px; border-radius: 8px; 
+                        display: flex; align-items: center; justify-content: center;
+                        background: transparent;
+                        color: inherit;
+                      }
+                      .rdp-nav_button:hover { background-color: rgba(128, 128, 128, 0.15); }
+                      
+                      /* Icono SVG de las flechas */
+                      .rdp-nav_icon { width: 18px; height: 18px; fill: currentColor; }
+
+                      .rdp-head_cell { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #71717a; padding-bottom: 8px; }
+                      
+                      .rdp-day { width: 40px; height: 40px; border-radius: 8px; font-size: 0.9rem; transition: all 0.2s; }
+                      
+                      .rdp-day_selected:not([disabled]) { 
+                        background-color: #4F46E5 !important; 
+                        color: white !important; 
+                        font-weight: bold;
+                        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+                      }
+                      
+                      .rdp-day_today { color: #4F46E5; font-weight: 900; }
+                      
+                      .dark .rdp-day:hover:not(.rdp-day_selected) { background-color: #27272A; }
+                      .rdp-day:hover:not(.rdp-day_selected) { background-color: #F4F4F5; }
+                    `}</style>
+                    <DayPicker
+                      mode="single"
+                      selected={baseDate}
+                      onSelect={(date) => {
+                        if (date) {
+                          setBaseDate(date);
+                          setIsCalendarOpen(false);
+                        }
+                      }}
+                      locale={currentLocale}
+                      showOutsideDays
+                      className="text-zinc-900 dark:text-white"
+                    />
+                  </div>
+                )}
               </div>
             )}
+
             <button
               onClick={onClose}
               className="p-2 hover:bg-zinc-100 dark:hover:bg-[#27272A] rounded-lg transition-colors shrink-0"
@@ -200,7 +293,7 @@ export default function MeetingPlannerModal({
           <>
             <div className="flex-1 overflow-auto relative scrollbar-thin bg-white dark:bg-[#18181B]">
               <div className="min-w-[800px] sm:min-w-[1000px] p-4 sm:p-6">
-                {/* Cabecera Sticky */}
+                {/* STICKY HEADER DE HORAS */}
                 <div className="flex mb-2 sticky top-0 z-50 bg-white dark:bg-[#18181B] pb-2 shadow-sm border-b border-zinc-100 dark:border-zinc-800/50">
                   <div className="w-32 sm:w-48 shrink-0 font-bold text-zinc-400 text-[10px] sm:text-xs uppercase tracking-wider flex items-end pb-2 pl-2 truncate">
                     {t.citiesLocalTime}
@@ -229,7 +322,6 @@ export default function MeetingPlannerModal({
                   </div>
                 </div>
 
-                {/* Filas */}
                 <div className="space-y-2 sm:space-y-3">
                   {allParticipants.map((city, index) => {
                     const staticData = AVAILABLE_CITIES.find(
@@ -329,7 +421,7 @@ export default function MeetingPlannerModal({
               </div>
             </div>
 
-            {/* FOOTER - AHORA CON 3 BOTONES */}
+            {/* FOOTER */}
             {selectedSlot !== null && (
               <div className="p-4 border-t border-zinc-200 dark:border-[#27272A] bg-zinc-50 dark:bg-[#18181B] flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0 animate-in slide-in-from-bottom-5 shrink-0 z-50">
                 <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -347,7 +439,6 @@ export default function MeetingPlannerModal({
                 </div>
 
                 <div className="flex items-center gap-2 w-full sm:w-auto">
-                  {/* BOTÓN GOOGLE */}
                   <button
                     onClick={handleGoogleCalendar}
                     className="p-2.5 bg-white dark:bg-[#27272A] border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors shadow-sm"
@@ -356,7 +447,6 @@ export default function MeetingPlannerModal({
                     <ExternalLink className="w-4 h-4" />
                   </button>
 
-                  {/* BOTÓN ICS */}
                   <button
                     onClick={handleDownloadICS}
                     className="p-2.5 bg-white dark:bg-[#27272A] border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors shadow-sm"
@@ -365,7 +455,6 @@ export default function MeetingPlannerModal({
                     <Download className="w-4 h-4" />
                   </button>
 
-                  {/* BOTÓN COPIAR (PRINCIPAL) */}
                   <button
                     onClick={handleCopySummary}
                     className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors shadow-lg shadow-indigo-500/20 font-medium text-sm active:scale-95"
