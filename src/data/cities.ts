@@ -3023,6 +3023,15 @@ export const AVAILABLE_CITIES: City[] = [
     countryCode: "ES",
   },
   {
+    id: "lpa",
+    name: "Gran Canaria",
+    country: "Spain",
+    timezone: "Atlantic/Canary",
+    lat: 28.1235,
+    lng: -15.4363,
+    countryCode: "ES",
+  },
+  {
     id: "tfs",
     name: "Tenerife",
     country: "Spain",
