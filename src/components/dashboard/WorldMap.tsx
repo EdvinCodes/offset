@@ -7,7 +7,6 @@ import * as d3Selection from "d3-selection";
 import "d3-transition";
 import * as topojson from "topojson-client";
 import { getNightPath } from "@/lib/solar";
-// 1. IMPORTAR AVAILABLE_CITIES PARA BUSCAR TRADUCCIONES
 import { City, AVAILABLE_CITIES } from "@/data/cities";
 import { useTime } from "@/hooks/useTime";
 import { toZonedTime, format } from "date-fns-tz";
@@ -36,7 +35,6 @@ export default function WorldMap({
   className = "",
   time,
 }: WorldMapProps) {
-  // 2. SACAR 'language' DEL HOOK
   const { t, language } = useTranslation();
   const internalTime = useTime();
   const now = time || internalTime;
@@ -229,11 +227,10 @@ export default function WorldMap({
             );
           })}
 
-          {/* CAPA 4: TOOLTIP (AHORA CON TRADUCCIÓN) */}
+          {/* CAPA 4: TOOLTIP (AHORA CON TRADUCCIÓN Y ESCUDO) */}
           {activeCity && activeCity.lat && activeCity.lng && (
             <g>
               {(() => {
-                // 3. LÓGICA DE TRADUCCIÓN DENTRO DEL TOOLTIP
                 const staticData = AVAILABLE_CITIES.find(
                   (c) => c.name === activeCity.name,
                 );
@@ -245,11 +242,21 @@ export default function WorldMap({
                 const [x, y] = projection([activeCity.lng, activeCity.lat]) || [
                   0, 0,
                 ];
-                const cityTime = toZonedTime(now, activeCity.timezone);
+
+                // --- ESCUDO DE TIEMPO SEGURO ---
+                const cityTime = (() => {
+                  try {
+                    return toZonedTime(now, activeCity.timezone);
+                  } catch {
+                    console.warn(
+                      `Timezone errónea en mapa: ${activeCity.timezone}`,
+                    );
+                    return toZonedTime(now, "UTC");
+                  }
+                })();
+
                 const timeStr = format(cityTime, "HH:mm");
                 const boxHeight = 44;
-
-                // Calculamos ancho basado en el nombre traducido
                 const textWidth = displayName.length * 8 + 50;
                 const boxY = y - 35 / currentK;
 
@@ -289,7 +296,6 @@ export default function WorldMap({
                         letterSpacing: "0.05em",
                       }}
                     >
-                      {/* 4. USAR EL NOMBRE TRADUCIDO */}
                       {displayName}
                     </text>
                     <text
