@@ -90,6 +90,10 @@ export const translations = {
 
     // Map
     interactiveMap: "Mapa Interactivo",
+
+    addToCalendar: "Añadir a calendario",
+    downloadIcs: "Descargar .ics (Outlook/Apple)",
+    openGoogle: "Abrir Google Calendar",
   },
   en: {
     // ... (lo que ya tenías)
@@ -180,6 +184,10 @@ export const translations = {
 
     // Map
     interactiveMap: "Interactive Map",
+
+    addToCalendar: "Añadir a calendario",
+    downloadIcs: "Descargar .ics (Outlook/Apple)",
+    openGoogle: "Abrir Google Calendar",
   },
   fr: {
     // ... (lo que ya tenías)
@@ -270,6 +278,10 @@ export const translations = {
 
     // Map
     interactiveMap: "Carte Interactive",
+
+    addToCalendar: "Ajouter au calendrier",
+    downloadIcs: "Télécharger .ics (Outlook/Apple)",
+    openGoogle: "Ouvrir Google Agenda",
   },
   de: {
     // ... (lo que ya tenías)
@@ -360,5 +372,9 @@ export const translations = {
 
     // Map
     interactiveMap: "Interaktive Karte",
+
+    addToCalendar: "Zum Kalender hinzufügen",
+    downloadIcs: ".ics herunterladen (Outlook/Apple)",
+    openGoogle: "Google Kalender öffnen",
   },
 };

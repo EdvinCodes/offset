@@ -2,13 +2,24 @@
 
 import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
-import { X, Calendar, Clock, Copy, Check, Globe } from "lucide-react";
+import {
+  X,
+  Calendar,
+  Clock,
+  Copy,
+  Check,
+  Globe,
+  Download,
+  ExternalLink,
+} from "lucide-react"; // Nuevos iconos
 import { useCityStore } from "@/store/useCityStore";
 import { City, AVAILABLE_CITIES } from "@/data/cities";
 import { format, addHours, startOfDay, type Locale } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
+// Importamos nuestra nueva utilidad
+import { generateGoogleCalendarUrl, downloadICSFile } from "@/lib/calendar";
 
 import { es, enUS, fr, de } from "date-fns/locale";
 
@@ -44,7 +55,6 @@ export default function MeetingPlannerModal({
     try {
       return toZonedTime(date, tz);
     } catch {
-      // Si falla, avisamos en consola y usamos UTC para no romper el modal
       console.warn(`Timezone inválida en el Planner: ${tz}`);
       return toZonedTime(date, "UTC");
     }
@@ -83,24 +93,30 @@ export default function MeetingPlannerModal({
       : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border-zinc-200 dark:border-zinc-700";
   };
 
-  const handleCopySummary = () => {
-    if (selectedSlot === null) return;
-    const selectedDate = hoursColumns[selectedSlot];
-
-    let text = `📅 ${t.proposedMeeting || "Reunión"}: ${format(selectedDate, "dd/MM/yyyy")}\n\n`;
-
+  // --- GENERADOR DE TEXTO COMÚN ---
+  // Extraemos esto a una función para usarlo en Copiar, Google y ICS
+  const generateMeetingDetails = (date: Date) => {
+    let text = "";
     allParticipants.forEach((city) => {
       const staticData = AVAILABLE_CITIES.find((c) => c.name === city.name);
       const namesSource = staticData?.names || city.names;
       const displayName =
         (namesSource as Record<string, string>)?.[language] || city.name;
 
-      // USAMOS EL ESCUDO AQUÍ
-      const cityTime = getSafeZonedTime(selectedDate, city.timezone);
+      const cityTime = getSafeZonedTime(date, city.timezone);
       text += `📍 ${displayName}: ${format(cityTime, "HH:mm")}\n`;
     });
+    return text;
+  };
 
-    navigator.clipboard.writeText(text);
+  const handleCopySummary = () => {
+    if (selectedSlot === null) return;
+    const selectedDate = hoursColumns[selectedSlot];
+
+    const header = `📅 ${t.proposedMeeting || "Reunión"}: ${format(selectedDate, "dd/MM/yyyy")}\n\n`;
+    const body = generateMeetingDetails(selectedDate);
+
+    navigator.clipboard.writeText(header + body);
 
     toast.success(t.summaryCopied, {
       description: t.summaryCopiedDesc,
@@ -109,6 +125,28 @@ export default function MeetingPlannerModal({
 
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  // --- NUEVO: HANDLER GOOGLE ---
+  const handleGoogleCalendar = () => {
+    if (selectedSlot === null) return;
+    const selectedDate = hoursColumns[selectedSlot];
+    const title = t.proposedMeeting || "Meeting via Offset";
+    const details = generateMeetingDetails(selectedDate);
+
+    const url = generateGoogleCalendarUrl(selectedDate, title, details);
+    window.open(url, "_blank");
+  };
+
+  // --- NUEVO: HANDLER ICS ---
+  const handleDownloadICS = () => {
+    if (selectedSlot === null) return;
+    const selectedDate = hoursColumns[selectedSlot];
+    const title = t.proposedMeeting || "Meeting via Offset";
+    const details = generateMeetingDetails(selectedDate);
+
+    downloadICSFile(selectedDate, title, details);
+    toast.success(t.downloadIcs);
   };
 
   if (!isOpen) return null;
@@ -121,6 +159,7 @@ export default function MeetingPlannerModal({
       />
 
       <div className="relative w-full max-w-5xl h-auto max-h-[92vh] sm:h-[85vh] bg-white dark:bg-[#18181B] border border-zinc-200 dark:border-[#27272A] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-200">
+        {/* HEADER */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 border-b border-zinc-200 dark:border-[#27272A] shrink-0 bg-white dark:bg-[#18181B] z-50 gap-4 sm:gap-0">
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="p-2 bg-indigo-100 dark:bg-indigo-500/10 rounded-lg text-indigo-600 dark:text-indigo-400 shrink-0">
@@ -156,10 +195,12 @@ export default function MeetingPlannerModal({
           </div>
         </div>
 
+        {/* CONTENIDO PRINCIPAL */}
         {hasSavedCities ? (
           <>
             <div className="flex-1 overflow-auto relative scrollbar-thin bg-white dark:bg-[#18181B]">
               <div className="min-w-[800px] sm:min-w-[1000px] p-4 sm:p-6">
+                {/* Cabecera Sticky */}
                 <div className="flex mb-2 sticky top-0 z-50 bg-white dark:bg-[#18181B] pb-2 shadow-sm border-b border-zinc-100 dark:border-zinc-800/50">
                   <div className="w-32 sm:w-48 shrink-0 font-bold text-zinc-400 text-[10px] sm:text-xs uppercase tracking-wider flex items-end pb-2 pl-2 truncate">
                     {t.citiesLocalTime}
@@ -188,6 +229,7 @@ export default function MeetingPlannerModal({
                   </div>
                 </div>
 
+                {/* Filas */}
                 <div className="space-y-2 sm:space-y-3">
                   {allParticipants.map((city, index) => {
                     const staticData = AVAILABLE_CITIES.find(
@@ -229,7 +271,6 @@ export default function MeetingPlannerModal({
 
                         <div className="flex-1 grid grid-cols-[repeat(24,minmax(0,1fr))]">
                           {hoursColumns.map((baseHour, i) => {
-                            // USAMOS EL ESCUDO AQUÍ TAMBIÉN
                             const cityTime = getSafeZonedTime(
                               baseHour,
                               city.timezone,
@@ -288,6 +329,7 @@ export default function MeetingPlannerModal({
               </div>
             </div>
 
+            {/* FOOTER - AHORA CON 3 BOTONES */}
             {selectedSlot !== null && (
               <div className="p-4 border-t border-zinc-200 dark:border-[#27272A] bg-zinc-50 dark:bg-[#18181B] flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0 animate-in slide-in-from-bottom-5 shrink-0 z-50">
                 <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -304,17 +346,38 @@ export default function MeetingPlannerModal({
                   </div>
                 </div>
 
-                <button
-                  onClick={handleCopySummary}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors shadow-lg shadow-indigo-500/20 font-medium text-sm active:scale-95"
-                >
-                  {copied ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
-                  {copied ? t.copied : t.copySummary}
-                </button>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  {/* BOTÓN GOOGLE */}
+                  <button
+                    onClick={handleGoogleCalendar}
+                    className="p-2.5 bg-white dark:bg-[#27272A] border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors shadow-sm"
+                    title={t.openGoogle}
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </button>
+
+                  {/* BOTÓN ICS */}
+                  <button
+                    onClick={handleDownloadICS}
+                    className="p-2.5 bg-white dark:bg-[#27272A] border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors shadow-sm"
+                    title={t.downloadIcs}
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
+
+                  {/* BOTÓN COPIAR (PRINCIPAL) */}
+                  <button
+                    onClick={handleCopySummary}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors shadow-lg shadow-indigo-500/20 font-medium text-sm active:scale-95"
+                  >
+                    {copied ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                    {copied ? t.copied : t.copySummary}
+                  </button>
+                </div>
               </div>
             )}
           </>
