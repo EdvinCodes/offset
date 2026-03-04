@@ -30,11 +30,14 @@ import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import { Logo } from "@/components/ui/Logo";
 import { City, AVAILABLE_CITIES } from "@/data/cities";
 import { useCityStore } from "@/store/useCityStore";
-import { Plus, CalendarRange } from "lucide-react";
+import { Plus, CalendarRange, Camera, Loader2 } from "lucide-react";
 
 import { useSearchParams } from "next/navigation";
 import ShareButton from "@/components/dashboard/ShareButton";
 import { parseShareUrl } from "@/lib/share";
+
+import * as htmlToImage from "html-to-image";
+import { format } from "date-fns";
 
 // IMPORTAMOS EL HOOK
 import { useTranslation } from "@/hooks/useTranslation";
@@ -48,6 +51,46 @@ function DashboardContent() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPlannerOpen, setIsPlannerOpen] = useState(false);
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  // --- FEATURE: EXPORTAR DASHBOARD A PNG ---
+  const handleExportPNG = async () => {
+    const element = document.getElementById("dashboard-export-area");
+    if (!element) return;
+
+    setIsExporting(true);
+    try {
+      // Usamos html-to-image forzando el ancho y alto total para que no recorte nada
+      const dataUrl = await htmlToImage.toPng(element, {
+        pixelRatio: 2,
+        backgroundColor: document.documentElement.classList.contains("dark")
+          ? "#09090B"
+          : "#FAFAFA",
+        // Estas dos líneas son la clave mágica para evitar recortes:
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        style: {
+          transform: "scale(1)", // Evita bugs si el contenedor tiene escalas previas
+          transformOrigin: "top left",
+        },
+      });
+
+      // Descargamos la imagen
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = `offset-dashboard-${format(new Date(), "yyyy-MM-dd")}.png`;
+      link.click();
+
+      toast.success("Dashboard exportado! 📸", {
+        description: "La imagen se ha guardado en tus descargas.",
+      });
+    } catch (error) {
+      console.error("Error exportando a PNG:", error);
+      toast.error("Error al generar la imagen");
+    } finally {
+      setIsExporting(false);
+    }
+  };
   // --- FEATURE: SHORTCUT DE BÚSQUEDA (Cmd+K o /) ---
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -269,7 +312,21 @@ function DashboardContent() {
           <Logo className="scale-75 sm:scale-100 origin-left" />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* --- NUEVO: BOTÓN DE EXPORTAR --- */}
+          <button
+            onClick={handleExportPNG}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-white dark:bg-[#18181B] hover:bg-zinc-50 dark:hover:bg-[#27272A] text-zinc-900 dark:text-white rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-[#27272A] shadow-sm transition-all font-medium text-xs sm:text-sm group"
+          >
+            {isExporting ? (
+              <Loader2 className="w-4 h-4 animate-spin text-zinc-500" />
+            ) : (
+              <Camera className="w-4 h-4 text-zinc-500 group-hover:text-[#6366F1] transition-colors" />
+            )}
+            <span className="hidden sm:inline">Exportar</span>
+          </button>
+
           <ShareButton />
 
           <button
@@ -313,7 +370,10 @@ function DashboardContent() {
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8 max-w-[1400px] mx-auto">
+        <div
+          id="dashboard-export-area"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 auto-rows-auto p-4 sm:p-6 rounded-3xl"
+        >
           {/* HERO CARD */}
           <div className="col-span-1 sm:col-span-2 xl:col-span-2 xl:row-span-2 h-full min-h-[250px]">
             {/* Lógica para traducir también la Hero City si coincide con nuestra base de datos */}

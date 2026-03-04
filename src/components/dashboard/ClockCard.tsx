@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState, useMemo } from "react"; // Añadido useMemo
+import { useEffect, useState, useMemo } from "react";
 import { format, type Locale } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { es, enUS, fr, de } from "date-fns/locale";
@@ -51,6 +51,7 @@ export default function ClockCard({
   }, [realTime, timeOffset]);
 
   const { t, language } = useTranslation();
+
   const { use24HourFormat, showSeconds } = useSettingsStore();
   const [weather, setWeather] = useState<{ temp: number; code: number } | null>(
     null,
@@ -60,18 +61,18 @@ export default function ClockCard({
   const dateLocales: Record<string, Locale> = { es, en: enUS, fr, de };
   const currentLocale = dateLocales[language] || es;
 
-  // FETCH CLIMA
+  // FETCH CLIMA CON ABORT CONTROLLER (Optimizado)
   useEffect(() => {
     if (!lat || !lng) return;
 
-    const controller = new AbortController(); // <-- 1. Creamos el controlador
+    const controller = new AbortController();
 
     const fetchWeather = async () => {
       setLoadingWeather(true);
       try {
         const res = await fetch(
           `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,weather_code&timezone=auto`,
-          { signal: controller.signal }, // <-- 2. Le pasamos la señal
+          { signal: controller.signal },
         );
         const data = await res.json();
         if (data.current) {
@@ -81,12 +82,10 @@ export default function ClockCard({
           });
         }
       } catch (e) {
-        // Ignoramos el error si fue provocado intencionadamente por el AbortController
         if ((e as Error).name !== "AbortError") {
           console.error("Error clima", e);
         }
       } finally {
-        // Aseguramos de no cambiar el estado si el componente se desmontó
         if (!controller.signal.aborted) {
           setLoadingWeather(false);
         }
@@ -98,7 +97,7 @@ export default function ClockCard({
 
     return () => {
       clearInterval(interval);
-      controller.abort(); // <-- 3. Cancelamos la petición si el componente se desmonta
+      controller.abort();
     };
   }, [lat, lng]);
 
@@ -113,15 +112,11 @@ export default function ClockCard({
     return <Sun className="w-4 h-4 text-zinc-400" />;
   };
 
-  // --- LÓGICA DE TIEMPO SEGURO ---
-  // Usamos useMemo para que la conversión solo ocurra cuando cambia 'now' o 'timezone'
   const zonedDate = useMemo(() => {
     if (!now) return null;
     try {
-      // Intentamos la conversión normal
       return toZonedTime(now, timezone);
     } catch {
-      // Si explota (como con South_Pole), devolvemos UTC por defecto para no romper la app
       console.warn(`Zona horaria inválida: ${timezone} en ciudad: ${city}`);
       return toZonedTime(now, "UTC");
     }
@@ -135,7 +130,6 @@ export default function ClockCard({
     );
   }
 
-  // A partir de aquí, usamos 'zonedDate' que ya es seguro
   const timeFormat = use24HourFormat ? "HH:mm" : "h:mm";
   const timeString = format(zonedDate, timeFormat);
   const period = use24HourFormat ? "" : format(zonedDate, "aa");
@@ -243,7 +237,7 @@ export default function ClockCard({
           )}
           {showSeconds && (
             <span
-              className={`font-medium ml-1 sm:ml-2 text-zinc-400 dark:text-[#A1A1AA] ${isHero ? "text-xl sm:text-2xl md:text-3xl" : "text-lg sm:text-xl md:text-2xl"}`}
+              className={`font-bold ml-1 sm:ml-2 text-zinc-400 dark:text-[#A1A1AA] ${isHero ? "text-xl sm:text-2xl md:text-3xl" : "text-lg sm:text-xl md:text-2xl"}`}
             >
               {secondsString}
             </span>
