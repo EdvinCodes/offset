@@ -19,7 +19,6 @@ import {
 import { toast } from "sonner";
 import { Suspense } from "react";
 
-import { useTime } from "@/hooks/useTime";
 import ClockCard from "@/components/dashboard/ClockCard";
 import SearchModal from "@/components/dashboard/SearchModal";
 import SettingsModal from "@/components/dashboard/SettingsModal";
@@ -43,7 +42,6 @@ import { useTranslation } from "@/hooks/useTranslation";
 function DashboardContent() {
   const { t, language } = useTranslation(); // Inicializamos el hook
 
-  const realTime = useTime();
   const [timeOffset, setTimeOffset] = useState(0);
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -64,10 +62,6 @@ function DashboardContent() {
     lng: 0,
     countryCode: "US",
   });
-
-  const simulatedTime = realTime
-    ? new Date(realTime.getTime() + timeOffset * 60 * 1000)
-    : null;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -289,7 +283,7 @@ function DashboardContent() {
 
       {/* MAPA */}
       <div className="max-w-[1400px] mx-auto mb-8">
-        <WorldMap cities={allMapPoints} time={simulatedTime} />
+        <WorldMap cities={allMapPoints} timeOffset={timeOffset} />
       </div>
 
       {/* GRID */}
@@ -317,7 +311,7 @@ function DashboardContent() {
                   city={displayHeroName} // <--- USAR EL NOMBRE TRADUCIDO
                   country={heroCity.country}
                   timezone={heroCity.timezone}
-                  now={simulatedTime}
+                  timeOffset={timeOffset}
                   lat={heroCity.lat}
                   lng={heroCity.lng}
                   countryCode={heroCity.countryCode}
@@ -352,7 +346,7 @@ function DashboardContent() {
                     city={displayName} // <--- Nombre traducido
                     country={city.country}
                     timezone={city.timezone}
-                    now={simulatedTime}
+                    timeOffset={timeOffset}
                     lat={city.lat}
                     lng={city.lng}
                     countryCode={city.countryCode}

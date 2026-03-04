@@ -1,13 +1,11 @@
 @import "tailwindcss";
 @variant dark (&:where(.dark, .dark *));
 
-/* BORRA O COMENTA ESTO si lo tenías fijo a oscuro */
-/* :root {
-   background-color: #09090b;
-   color: #fafafa;
-} */
+.dark {
+  background-color: #09090b;
+  color: #fafafa;
+}
 
-/* Opcional: para suavizar las fuentes en este fondo oscuro */
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

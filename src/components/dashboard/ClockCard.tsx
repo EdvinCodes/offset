@@ -18,12 +18,13 @@ import {
 } from "lucide-react";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useTime } from "@/hooks/useTime";
 
 interface ClockCardProps {
   city: string;
   country: string;
   timezone: string;
-  now: Date | null;
+  timeOffset?: number;
   lat?: number;
   lng?: number;
   countryCode?: string;
@@ -35,13 +36,20 @@ export default function ClockCard({
   city,
   country,
   timezone,
-  now,
   lat,
   lng,
   countryCode,
+  timeOffset = 0,
   isHero = false,
   onDelete,
 }: ClockCardProps) {
+  const realTime = useTime();
+  const now = useMemo(() => {
+    return realTime
+      ? new Date(realTime.getTime() + timeOffset * 60 * 1000)
+      : null;
+  }, [realTime, timeOffset]);
+
   const { t, language } = useTranslation();
   const { use24HourFormat, showSeconds } = useSettingsStore();
   const [weather, setWeather] = useState<{ temp: number; code: number } | null>(

@@ -27,17 +27,19 @@ interface WorldData {
 interface WorldMapProps {
   cities: City[];
   className?: string;
-  time?: Date | null;
+  timeOffset?: number;
 }
 
 export default function WorldMap({
   cities,
   className = "",
-  time,
+  timeOffset = 0,
 }: WorldMapProps) {
   const { t, language } = useTranslation();
   const internalTime = useTime();
-  const now = time || internalTime;
+  const now = internalTime
+    ? new Date(internalTime.getTime() + timeOffset * 60 * 1000)
+    : null;
 
   const [worldData, setWorldData] = useState<WorldData | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 400 });

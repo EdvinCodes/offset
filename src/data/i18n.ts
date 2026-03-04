@@ -2,7 +2,6 @@ export type Language = "es" | "en" | "fr" | "de";
 
 export const translations = {
   es: {
-    // ... (lo que ya tenías)
     settings: "Ajustes",
     planner: "Planificador",
     addClock: "Añadir Reloj",
@@ -96,7 +95,6 @@ export const translations = {
     openGoogle: "Abrir Google Calendar",
   },
   en: {
-    // ... (lo que ya tenías)
     settings: "Settings",
     planner: "Meeting Planner",
     addClock: "Add Clock",
@@ -185,12 +183,11 @@ export const translations = {
     // Map
     interactiveMap: "Interactive Map",
 
-    addToCalendar: "Añadir a calendario",
-    downloadIcs: "Descargar .ics (Outlook/Apple)",
-    openGoogle: "Abrir Google Calendar",
+    addToCalendar: "Add to calendar",
+    downloadIcs: "Download .ics (Outlook/Apple)",
+    openGoogle: "Open Google Calendar",
   },
   fr: {
-    // ... (lo que ya tenías)
     settings: "Paramètres",
     planner: "Planificateur",
     addClock: "Ajouter Horloge",
@@ -284,7 +281,6 @@ export const translations = {
     openGoogle: "Ouvrir Google Agenda",
   },
   de: {
-    // ... (lo que ya tenías)
     settings: "Einstellungen",
     planner: "Planer",
     addClock: "Uhr Hinzufügen",

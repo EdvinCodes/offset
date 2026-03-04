@@ -14,12 +14,16 @@ interface SettingsModalProps {
 }
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const { use24HourFormat, showSeconds, toggleFormat, toggleSeconds } =
-    useSettingsStore();
+  const {
+    use24HourFormat,
+    showSeconds,
+    toggleFormat,
+    toggleSeconds,
+    setLanguage,
+  } = useSettingsStore();
   const { savedCities, restoreBackup } = useCityStore();
   const { theme, setTheme } = useTheme();
 
-  const { setLanguage } = useSettingsStore();
   const { t, language } = useTranslation();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -67,17 +71,25 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
           const json = JSON.parse(content);
 
-          if (Array.isArray(json)) {
-            // Validamos que al menos tenga las propiedades básicas para no romper la store
+          const isValidBackup =
+            Array.isArray(json) &&
+            json.every(
+              (city) =>
+                city &&
+                typeof city === "object" &&
+                city.id &&
+                city.name &&
+                city.timezone,
+            );
+
+          if (isValidBackup) {
             restoreBackup(json);
             toast.success(t.importSuccess, {
               description: t.importSuccessDesc,
             });
             onClose();
           } else {
-            toast.error(t.invalidFile, {
-              description: t.invalidFileDesc,
-            });
+            toast.error(t.invalidFile, { description: t.invalidFileDesc });
           }
         } catch {
           // Si el JSON.parse falla (archivo corrupto o no es JSON)
