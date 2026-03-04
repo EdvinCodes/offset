@@ -64,11 +64,14 @@ export default function ClockCard({
   useEffect(() => {
     if (!lat || !lng) return;
 
+    const controller = new AbortController(); // <-- 1. Creamos el controlador
+
     const fetchWeather = async () => {
       setLoadingWeather(true);
       try {
         const res = await fetch(
           `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,weather_code&timezone=auto`,
+          { signal: controller.signal }, // <-- 2. Le pasamos la señal
         );
         const data = await res.json();
         if (data.current) {
@@ -78,15 +81,25 @@ export default function ClockCard({
           });
         }
       } catch (e) {
-        console.error("Error clima", e);
+        // Ignoramos el error si fue provocado intencionadamente por el AbortController
+        if ((e as Error).name !== "AbortError") {
+          console.error("Error clima", e);
+        }
       } finally {
-        setLoadingWeather(false);
+        // Aseguramos de no cambiar el estado si el componente se desmontó
+        if (!controller.signal.aborted) {
+          setLoadingWeather(false);
+        }
       }
     };
 
     fetchWeather();
     const interval = setInterval(fetchWeather, 1000 * 60 * 30);
-    return () => clearInterval(interval);
+
+    return () => {
+      clearInterval(interval);
+      controller.abort(); // <-- 3. Cancelamos la petición si el componente se desmonta
+    };
   }, [lat, lng]);
 
   const getWeatherIcon = (code: number) => {

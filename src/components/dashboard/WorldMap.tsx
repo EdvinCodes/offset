@@ -151,7 +151,7 @@ export default function WorldMap({
   if (!worldData || !now)
     return (
       <div
-        id="map-container"
+        id="map-container-loading"
         className={`w-full aspect-[2/1] bg-transparent rounded-3xl animate-pulse ${className}`}
       />
     );

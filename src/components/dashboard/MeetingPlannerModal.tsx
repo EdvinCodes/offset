@@ -126,22 +126,27 @@ export default function MeetingPlannerModal({
     return text;
   };
 
-  const handleCopySummary = () => {
+  const handleCopySummary = async () => {
     if (selectedSlot === null) return;
     const selectedDate = hoursColumns[selectedSlot];
 
     const header = `📅 ${t.proposedMeeting || "Reunión"}: ${format(selectedDate, "dd/MM/yyyy")}\n\n`;
     const body = generateMeetingDetails(selectedDate);
 
-    navigator.clipboard.writeText(header + body);
+    try {
+      await navigator.clipboard.writeText(header + body); // <-- Añadir await
 
-    toast.success(t.summaryCopied, {
-      description: t.summaryCopiedDesc,
-      icon: "📋",
-    });
+      toast.success(t.summaryCopied, {
+        description: t.summaryCopiedDesc,
+        icon: "📋",
+      });
 
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast.error("Error al copiar al portapapeles");
+      console.error("Clipboard error:", err);
+    }
   };
 
   const handleGoogleCalendar = () => {

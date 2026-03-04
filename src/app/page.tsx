@@ -72,7 +72,8 @@ function DashboardContent() {
 
   // --- LEER URL COMPARTIDA ---
   useEffect(() => {
-    if (searchParams.size > 0 && isLoaded) {
+    // Solo ejecutamos esto una vez cuando la app se monta y detecta la URL
+    if (searchParams.size > 0) {
       const sharedCities = parseShareUrl(searchParams);
 
       if (sharedCities && sharedCities.length > 0) {
@@ -81,19 +82,17 @@ function DashboardContent() {
         const newUrl = window.location.pathname;
         window.history.replaceState({}, "", newUrl);
 
-        // USAMOS TRADUCCIONES PARA EL ÉXITO
         toast.success(t.dashboardLoaded, {
           description: t.dashboardImportDesc,
           icon: "🔗",
         });
       } else if (searchParams.get("d")) {
-        // USAMOS TRADUCCIONES PARA EL ERROR
         toast.error(t.linkInvalid, {
           description: t.linkInvalidDesc,
         });
       }
     }
-  }, [searchParams, overrideCities, isLoaded, t]); // Añadimos 't' a dependencias por buenas prácticas
+  }, [searchParams, overrideCities, t]); // Quitamos isLoaded de las dependencias
 
   // --- LÓGICA DE UBICACIÓN ---
   useEffect(() => {
