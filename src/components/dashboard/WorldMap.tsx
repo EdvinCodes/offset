@@ -13,6 +13,9 @@ import { toZonedTime, format } from "date-fns-tz";
 import { Plus, Minus, RotateCcw } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
+import { useCityStore } from "@/store/useCityStore";
+import { toast } from "sonner";
+
 interface WorldFeature {
   type: "Feature";
   geometry: d3.GeoGeometryObjects;
@@ -36,6 +39,9 @@ export default function WorldMap({
   timeOffset = 0,
 }: WorldMapProps) {
   const { t, language } = useTranslation();
+
+  const { addCity, savedCities } = useCityStore();
+
   const internalTime = useTime();
   const now = internalTime
     ? new Date(internalTime.getTime() + timeOffset * 60 * 1000)
@@ -131,6 +137,36 @@ export default function WorldMap({
     }
   };
 
+  // --- NUEVA FUNCIÓN: Manejador del clic ---
+  const handleCityClick = (city: City) => {
+    // 1. Evitamos añadir la ciudad principal (Hero City) a las tarjetas pequeñas
+    if (city.id === "local-user" || city.id === "loading") return;
+
+    // 2. Comprobamos si ya está añadida
+    const isAdded = savedCities.some(
+      (c) => c.name === city.name && c.country === city.country,
+    );
+
+    if (isAdded) {
+      toast.info(t.added || "Ya añadido");
+      return;
+    }
+
+    // 3. La añadimos
+    addCity(city);
+
+    // 4. Buscamos su nombre traducido para el Toast
+    const staticData = AVAILABLE_CITIES.find((c) => c.name === city.name);
+    const namesSource = staticData?.names || city.names;
+    const displayName =
+      (namesSource as Record<string, string>)?.[language] || city.name;
+
+    toast.success(t.cityAdded, {
+      description: `${displayName} ${t.cityAddedDesc}`,
+      icon: "🗺️",
+    });
+  };
+
   const projection = useMemo(() => {
     const sphere: d3.GeoSphere = { type: "Sphere" };
     return d3
@@ -202,6 +238,7 @@ export default function WorldMap({
                     key={city.id}
                     onMouseEnter={() => setHoverCityId(city.id)}
                     onMouseLeave={() => setHoverCityId(null)}
+                    onClick={() => handleCityClick(city)}
                     style={{ cursor: "pointer" }}
                   >
                     {isHovered && (
