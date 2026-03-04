@@ -20,6 +20,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     toggleFormat,
     toggleSeconds,
     setLanguage,
+    businessStart,
+    businessEnd,
+    setBusinessHours,
   } = useSettingsStore();
   const { savedCities, restoreBackup } = useCityStore();
   const { theme, setTheme } = useTheme();
@@ -248,6 +251,65 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     className={`absolute top-1 left-1 bg-white w-3 h-3 rounded-full transition-transform ${showSeconds ? "translate-x-5" : "translate-x-0"}`}
                   />
                 </button>
+              </div>
+
+              {/* SECCIÓN EXTRA: HORARIO LABORAL */}
+              <div>
+                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">
+                  {t.business || "Horario Laboral"}
+                </h3>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-[#09090B] border border-zinc-200 dark:border-[#27272A]">
+                  <div className="flex-1">
+                    <label className="text-xs text-zinc-500 block mb-1">
+                      Inicio
+                    </label>
+                    <select
+                      value={businessStart}
+                      onChange={(e) =>
+                        setBusinessHours(Number(e.target.value), businessEnd)
+                      }
+                      className="w-full bg-transparent text-sm font-medium text-zinc-900 dark:text-white outline-none cursor-pointer"
+                    >
+                      {Array.from({ length: 24 }).map((_, i) => (
+                        <option
+                          key={i}
+                          value={i}
+                          className="bg-white dark:bg-[#18181B] text-zinc-900 dark:text-white"
+                        >
+                          {i.toString().padStart(2, "0")}:00
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="text-zinc-300 dark:text-zinc-600 font-light">
+                    -
+                  </div>
+
+                  <div className="flex-1">
+                    <label className="text-xs text-zinc-500 block mb-1">
+                      Fin
+                    </label>
+                    <select
+                      value={businessEnd}
+                      onChange={(e) =>
+                        setBusinessHours(businessStart, Number(e.target.value))
+                      }
+                      className="w-full bg-transparent text-sm font-medium text-zinc-900 dark:text-white outline-none cursor-pointer"
+                    >
+                      {Array.from({ length: 24 }).map((_, i) => (
+                        <option
+                          key={i}
+                          value={i}
+                          disabled={i <= businessStart}
+                          className="bg-white dark:bg-[#18181B] text-zinc-900 dark:text-white"
+                        >
+                          {i.toString().padStart(2, "0")}:00
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

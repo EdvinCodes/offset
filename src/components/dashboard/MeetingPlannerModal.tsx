@@ -24,6 +24,7 @@ import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 
 import { es, enUS, fr, de } from "date-fns/locale";
+import { useSettingsStore } from "@/store/useSettingsStore";
 
 interface MeetingPlannerModalProps {
   isOpen: boolean;
@@ -38,6 +39,8 @@ export default function MeetingPlannerModal({
 }: MeetingPlannerModalProps) {
   const { t, language } = useTranslation();
   const savedCities = useCityStore((state) => state.savedCities);
+
+  const { businessStart, businessEnd } = useSettingsStore();
 
   const allParticipants = useMemo(() => {
     return [heroCity, ...savedCities];
@@ -93,8 +96,15 @@ export default function MeetingPlannerModal({
   }, [baseDate]);
 
   const getTimeStatus = (hour: number) => {
-    if (hour >= 9 && hour < 17) return "business";
-    if ((hour >= 7 && hour < 9) || (hour >= 17 && hour < 20)) return "stretch";
+    // Horario central
+    if (hour >= businessStart && hour < businessEnd) return "business";
+    // Horario extendido (2h antes, 3h después)
+    if (
+      (hour >= businessStart - 2 && hour < businessStart) ||
+      (hour >= businessEnd && hour < businessEnd + 3)
+    )
+      return "stretch";
+
     return "night";
   };
 
@@ -412,11 +422,14 @@ export default function MeetingPlannerModal({
                 <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-xs text-zinc-500 dark:text-zinc-400 border-t border-zinc-200 dark:border-zinc-800 pt-4 bg-white dark:bg-[#18181B] sticky bottom-0 z-30 pb-2">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-emerald-500/20 border border-emerald-500/30"></div>
-                    <span>{t.business} (09 - 17)</span>
+                    <span>
+                      {t.business} ({businessStart.toString().padStart(2, "0")}{" "}
+                      - {businessEnd.toString().padStart(2, "0")})
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-amber-500/20 border border-amber-500/30"></div>
-                    <span>{t.extended} (07-09 / 17-20)</span>
+                    <span>{t.extended}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"></div>
