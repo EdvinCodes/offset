@@ -60,7 +60,7 @@ function DashboardContent() {
     timezone: "UTC",
     lat: 0,
     lng: 0,
-    countryCode: "US",
+    countryCode: "UN",
   });
 
   const sensors = useSensors(

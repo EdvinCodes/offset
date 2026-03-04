@@ -2,18 +2,15 @@
 import { geoCircle } from "d3-geo";
 
 export function getNightPath(date: Date) {
-  // 1. Calcular la posición del sol (subsolar point)
-  // Basado en ecuaciones astronómicas simplificadas
   const sunPos = getSunPosition(date);
 
-  // 2. El "antipoda" del sol es el centro de la noche
   const antipodalLat = -sunPos.latitude;
-  const antipodalLng = (sunPos.longitude + 180) % 360;
+  // FÓRMULA CORREGIDA: Normaliza estrictamente a un rango de [-180, 180]
+  const antipodalLng = ((((sunPos.longitude + 180) % 360) + 360) % 360) - 180;
 
-  // 3. Generar un círculo de 90 grados alrededor del centro de la noche
   const circleGenerator = geoCircle()
     .center([antipodalLng, antipodalLat])
-    .radius(90); // 90 grados cubre la mitad de la tierra
+    .radius(90);
 
   return circleGenerator();
 }

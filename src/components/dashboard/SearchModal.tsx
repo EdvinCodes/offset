@@ -49,11 +49,14 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
   // --- LÓGICA DE BÚSQUEDA ---
   useEffect(() => {
+    let isMounted = true;
+
     const searchCities = async () => {
-      // Limpiamos si es muy corto, pero NO mostramos "No results" todavía
       if (query.trim().length < 2) {
-        setResults([]);
-        setLoading(false);
+        if (isMounted) {
+          setResults([]);
+          setLoading(false);
+        }
         return;
       }
 
@@ -96,23 +99,27 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
       // C) FUSIÓN SIN DUPLICADOS
       // Si la ciudad API ya existe en LOCAL (mismo nombre y país), preferimos la LOCAL
-      const uniqueApiMatches = apiMatches.filter(
-        (apiCity) =>
-          !localMatches.some(
-            (localCity) =>
-              localCity.name === apiCity.name &&
-              localCity.country === apiCity.country,
-          ),
-      );
-
-      // Combinamos y guardamos en el estado 'results' (Raw Data)
-      setResults([...localMatches, ...uniqueApiMatches]);
-      setLoading(false);
+      if (isMounted) {
+        const uniqueApiMatches = apiMatches.filter(
+          (apiCity) =>
+            !localMatches.some(
+              (localCity) =>
+                localCity.name === apiCity.name &&
+                localCity.country === apiCity.country,
+            ),
+        );
+        setResults([...localMatches, ...uniqueApiMatches]);
+        setLoading(false);
+      }
     };
 
     // Debounce de 300ms para no saturar
     const debounce = setTimeout(searchCities, 300);
-    return () => clearTimeout(debounce);
+
+    return () => {
+      clearTimeout(debounce);
+      isMounted = false; // <-- 2. Desactivamos el flag al desmontar
+    };
   }, [query, language]);
 
   const handleAddCity = (city: City) => {
