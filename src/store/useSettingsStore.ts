@@ -10,11 +10,16 @@ interface SettingsState {
   businessStart: number;
   businessEnd: number;
 
+  extendedStart: number;
+  extendedEnd: number;
+
   toggleFormat: () => void;
   toggleSeconds: () => void;
   setLanguage: (lang: Language) => void;
 
   setBusinessHours: (start: number, end: number) => void;
+
+  setExtendedHours: (start: number, end: number) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -27,6 +32,9 @@ export const useSettingsStore = create<SettingsState>()(
       businessStart: 9,
       businessEnd: 17,
 
+      extendedStart: 7,
+      extendedEnd: 20,
+
       toggleFormat: () =>
         set((state) => ({ use24HourFormat: !state.use24HourFormat })),
       toggleSeconds: () =>
@@ -36,7 +44,11 @@ export const useSettingsStore = create<SettingsState>()(
       // Lógica para actualizar las horas
       setBusinessHours: (start, end) =>
         set({ businessStart: start, businessEnd: end }),
+
+      setExtendedHours: (start, end) =>
+        set({ extendedStart: start, extendedEnd: end }),
     }),
+
     {
       name: "offset-settings",
     },

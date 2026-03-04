@@ -45,6 +45,17 @@ export default function ShareButton() {
       ) : (
         <Share2 className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform" />
       )}
+
+      {/* Badge */}
+      {savedCities.length > 0 && (
+        <span
+          className="absolute -top-1 -right-1 w-4 h-4 rounded-full 
+                     bg-indigo-600 text-white text-[10px] font-bold 
+                     flex items-center justify-center"
+        >
+          {savedCities.length}
+        </span>
+      )}
     </button>
   );
 }

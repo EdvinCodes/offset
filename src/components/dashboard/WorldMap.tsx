@@ -298,8 +298,27 @@ export default function WorldMap({
                     })();
 
                     const timeStr = `${isError ? "⚠️ " : ""}${format(cityTime, "HH:mm")}`;
+
+                    const isTimeTravel = timeOffset !== 0;
+                    let realTimeStr: string | null = null;
+                    if (isTimeTravel && internalTime) {
+                      try {
+                        const realCityTime = toZonedTime(
+                          internalTime,
+                          activeCity.timezone,
+                        );
+                        realTimeStr = format(realCityTime, "HH:mm");
+                      } catch {
+                        /* ignore */
+                      }
+                    }
+
+                    const textWidth = Math.max(
+                      displayName.length * 8 + 50,
+                      isTimeTravel && realTimeStr ? 130 : 60, // ← caja más ancha si hay dos horas
+                    );
+
                     const boxHeight = 44;
-                    const textWidth = displayName.length * 8 + 50;
                     const boxY = y - 35 / currentK;
 
                     return (
@@ -340,14 +359,37 @@ export default function WorldMap({
                         >
                           {displayName}
                         </text>
-                        <text
-                          y={-10}
-                          textAnchor="middle"
-                          fill="#FFFFFF"
-                          fontSize="15"
-                          fontWeight="bold"
-                        >
-                          {timeStr}
+                        {/* DESPUÉS */}
+                        <text y={-10} textAnchor="middle">
+                          {isTimeTravel && realTimeStr ? (
+                            <>
+                              <tspan
+                                fill="#52525B"
+                                fontSize="12"
+                                fontWeight="bold"
+                              >
+                                {realTimeStr}
+                              </tspan>
+                              <tspan fill="#6366F1" fontSize="11">
+                                {" → "}
+                              </tspan>
+                              <tspan
+                                fill="#6366F1"
+                                fontSize="14"
+                                fontWeight="bold"
+                              >
+                                {timeStr}
+                              </tspan>
+                            </>
+                          ) : (
+                            <tspan
+                              fill="#FFFFFF"
+                              fontSize="15"
+                              fontWeight="bold"
+                            >
+                              {timeStr}
+                            </tspan>
+                          )}
                         </text>
                       </g>
                     );

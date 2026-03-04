@@ -2,7 +2,9 @@ import { addHours } from "date-fns";
 
 // Formatea la fecha a: YYYYMMDDThhmmssZ (Formato UTC requerido por calendarios)
 const formatToICSDate = (date: Date): string => {
-  return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  return (
+    date.toISOString().replace(/-/g, "").replace(/:/g, "").split(".")[0] + "Z"
+  );
 };
 
 export const generateGoogleCalendarUrl = (

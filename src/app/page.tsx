@@ -406,7 +406,7 @@ function DashboardContent() {
             items={savedCities.map((c) => c.id)}
             strategy={rectSortingStrategy}
           >
-            {savedCities.map((city) => {
+            {savedCities.map((city, index) => {
               // CORRECCIÓN: Buscamos por NOMBRE, no por ID
               // Así funciona aunque el ID de la API sea diferente al tuyo manual
               const staticData = AVAILABLE_CITIES.find(
@@ -432,6 +432,7 @@ function DashboardContent() {
                     lng={city.lng}
                     countryCode={city.countryCode}
                     onDelete={() => handleRemoveCity(city)}
+                    style={{ animationDelay: `${index * 60}ms` }}
                   />
                 </SortableItem>
               );

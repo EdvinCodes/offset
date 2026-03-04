@@ -23,6 +23,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     businessStart,
     businessEnd,
     setBusinessHours,
+    extendedStart,
+    extendedEnd,
+    setExtendedHours,
   } = useSettingsStore();
   const { savedCities, restoreBackup } = useCityStore();
   const { theme, setTheme } = useTheme();
@@ -309,6 +312,60 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       ))}
                     </select>
                   </div>
+                </div>
+              </div>
+
+              {/* Horario Extendido */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-[#09090B] border border-zinc-200 dark:border-[#27272A]">
+                <div className="flex-1">
+                  <label className="text-xs text-zinc-500 block mb-1">
+                    {t.extended} — Inicio
+                  </label>
+                  <select
+                    value={extendedStart}
+                    onChange={(e) =>
+                      setExtendedHours(Number(e.target.value), extendedEnd)
+                    }
+                    className="w-full bg-transparent text-sm font-medium text-zinc-900 dark:text-white outline-none cursor-pointer"
+                  >
+                    {Array.from({ length: 24 }).map((_, i) => (
+                      <option
+                        key={i}
+                        value={i}
+                        className="bg-white dark:bg-[#18181B] text-zinc-900 dark:text-white"
+                      >
+                        {i.toString().padStart(2, "0")}:00
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="text-zinc-300 dark:text-zinc-600 font-light">
+                  -
+                </div>
+
+                <div className="flex-1">
+                  <label className="text-xs text-zinc-500 block mb-1">
+                    Fin
+                  </label>
+                  <select
+                    value={extendedEnd}
+                    onChange={(e) =>
+                      setExtendedHours(extendedStart, Number(e.target.value))
+                    }
+                    className="w-full bg-transparent text-sm font-medium text-zinc-900 dark:text-white outline-none cursor-pointer"
+                  >
+                    {Array.from({ length: 24 }).map((_, i) => (
+                      <option
+                        key={i}
+                        value={i}
+                        disabled={i <= extendedStart}
+                        className="bg-white dark:bg-[#18181B] text-zinc-900 dark:text-white"
+                      >
+                        {i.toString().padStart(2, "0")}:00
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>

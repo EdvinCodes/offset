@@ -29,6 +29,7 @@ interface ClockCardProps {
   lng?: number;
   countryCode?: string;
   isHero?: boolean;
+  style?: React.CSSProperties;
   onDelete?: () => void;
 }
 
@@ -151,6 +152,7 @@ export default function ClockCard({
     <div
       className={`
         relative overflow-hidden group transition-all duration-300
+        animate-in fade-in zoom-in-95
         bg-white dark:bg-[#18181B] 
         border border-zinc-200 dark:border-[#27272A]
         shadow-sm hover:shadow-md dark:shadow-none
