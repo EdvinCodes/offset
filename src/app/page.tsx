@@ -48,6 +48,28 @@ function DashboardContent() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPlannerOpen, setIsPlannerOpen] = useState(false);
 
+  // --- FEATURE: SHORTCUT DE BÚSQUEDA (Cmd+K o /) ---
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Evitamos interferir si el usuario ya está escribiendo en un input
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        return;
+      }
+
+      // Detectamos Cmd+K (Mac) o Ctrl+K (Windows) o la tecla "/"
+      if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || e.key === "/") {
+        e.preventDefault(); // Evita que el navegador haga cosas raras (como escribir la barra en un input inexistente)
+        setIsSearchOpen(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, []);
+
   const { savedCities, removeCity, reorderCities, overrideCities, addCity } =
     useCityStore();
   const searchParams = useSearchParams();
@@ -358,14 +380,19 @@ function DashboardContent() {
 
           <button
             onClick={() => setIsSearchOpen(true)}
-            className="h-64 rounded-3xl border-2 border-dashed border-zinc-300 dark:border-[#27272A] flex flex-col items-center justify-center text-zinc-400 dark:text-[#A1A1AA] hover:text-[#6366F1] hover:border-[#6366F1] hover:bg-[#6366F1]/5 transition-all cursor-pointer group w-full"
+            className="h-64 rounded-3xl border-2 border-dashed border-zinc-300 dark:border-[#27272A] flex flex-col items-center justify-center text-zinc-400 dark:text-[#A1A1AA] hover:text-[#6366F1] hover:border-[#6366F1] hover:bg-[#6366F1]/5 transition-all cursor-pointer group w-full relative"
           >
             <div className="p-4 bg-white dark:bg-[#18181B] rounded-full mb-4 group-hover:scale-110 transition-transform border border-zinc-200 dark:border-[#27272A] shadow-sm">
               <Plus className="w-8 h-8" />
             </div>
-            <span className="text-xs sm:text-sm font-bold tracking-widest uppercase">
+            <span className="text-xs sm:text-sm font-bold tracking-widest uppercase mb-2">
               {t.addClock}
             </span>
+            {/* --- NUEVO: Insignia del atajo de teclado --- */}
+            <div className="hidden sm:flex items-center gap-1 text-[10px] font-medium bg-zinc-100 dark:bg-[#27272A] px-2 py-1 rounded text-zinc-500">
+              <kbd className="font-sans">⌘</kbd>
+              <span>K</span>
+            </div>
           </button>
         </div>
       </DndContext>
