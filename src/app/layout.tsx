@@ -2,11 +2,13 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "sonner";
+import { LangSync } from "@/components/LangSync";
+import { AppToaster } from "@/components/AppToaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://offset-tau.vercel.app"),
   title: {
     default: "Offset | World Clock",
     template: "%s | Offset",
@@ -58,21 +60,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem={false}
         >
+          <LangSync />
           {children}
 
-          <Toaster
-            richColors
-            position="top-center"
-            theme="system"
-            closeButton
-          />
+          <AppToaster />
         </ThemeProvider>
       </body>
     </html>

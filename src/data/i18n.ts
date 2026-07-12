@@ -93,6 +93,17 @@ export const translations = {
     addToCalendar: "Añadir a calendario",
     downloadIcs: "Descargar .ics (Outlook/Apple)",
     openGoogle: "Abrir Google Calendar",
+
+    exportPng: "Exportar",
+    exportPngSuccess: "Dashboard exportado",
+    exportPngSuccessDesc: "La imagen se ha guardado en tus descargas.",
+    exportPngError: "Error al generar la imagen",
+    removedDesc: "se ha quitado del dashboard.",
+    alreadyAdded: "Ya añadida",
+    you: "Tú",
+    start: "Inicio",
+    end: "Fin",
+    copyError: "Error al copiar al portapapeles",
   },
   en: {
     settings: "Settings",
@@ -186,6 +197,17 @@ export const translations = {
     addToCalendar: "Add to calendar",
     downloadIcs: "Download .ics (Outlook/Apple)",
     openGoogle: "Open Google Calendar",
+
+    exportPng: "Export",
+    exportPngSuccess: "Dashboard exported",
+    exportPngSuccessDesc: "The image has been saved to your downloads.",
+    exportPngError: "Error generating image",
+    removedDesc: "has been removed from the dashboard.",
+    alreadyAdded: "Already added",
+    you: "You",
+    start: "Start",
+    end: "End",
+    copyError: "Error copying to clipboard",
   },
   fr: {
     settings: "Paramètres",
@@ -256,10 +278,10 @@ export const translations = {
     addedLabel: "Ajouté",
 
     // Planner Extra
-    citiesLocalTime: "Cities / Local Time",
-    summaryCopied: "Summary copied",
-    summaryCopiedDesc: "Ready to paste into your email or calendar.",
-    proposedMeeting: "Proposed Meeting",
+    citiesLocalTime: "Villes / Heure locale",
+    summaryCopied: "Résumé copié",
+    summaryCopiedDesc: "Prêt à coller dans votre e-mail ou calendrier.",
+    proposedMeeting: "Réunion proposée",
 
     // Share Extra
     shareTitle: "Partager la configuration",
@@ -279,6 +301,17 @@ export const translations = {
     addToCalendar: "Ajouter au calendrier",
     downloadIcs: "Télécharger .ics (Outlook/Apple)",
     openGoogle: "Ouvrir Google Agenda",
+
+    exportPng: "Exporter",
+    exportPngSuccess: "Tableau de bord exporté",
+    exportPngSuccessDesc: "L'image a été enregistrée dans vos téléchargements.",
+    exportPngError: "Erreur lors de la génération de l'image",
+    removedDesc: "a été retirée du tableau de bord.",
+    alreadyAdded: "Déjà ajoutée",
+    you: "Vous",
+    start: "Début",
+    end: "Fin",
+    copyError: "Erreur lors de la copie dans le presse-papiers",
   },
   de: {
     settings: "Einstellungen",
@@ -372,5 +405,16 @@ export const translations = {
     addToCalendar: "Zum Kalender hinzufügen",
     downloadIcs: ".ics herunterladen (Outlook/Apple)",
     openGoogle: "Google Kalender öffnen",
+
+    exportPng: "Exportieren",
+    exportPngSuccess: "Dashboard exportiert",
+    exportPngSuccessDesc: "Das Bild wurde in Ihren Downloads gespeichert.",
+    exportPngError: "Fehler beim Erstellen des Bildes",
+    removedDesc: "wurde vom Dashboard entfernt.",
+    alreadyAdded: "Bereits hinzugefügt",
+    you: "Sie",
+    start: "Start",
+    end: "Ende",
+    copyError: "Fehler beim Kopieren in die Zwischenablage",
   },
 };

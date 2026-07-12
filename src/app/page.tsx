@@ -81,12 +81,12 @@ function DashboardContent() {
       link.download = `offset-dashboard-${format(new Date(), "yyyy-MM-dd")}.png`;
       link.click();
 
-      toast.success("Dashboard exportado! 📸", {
-        description: "La imagen se ha guardado en tus descargas.",
+      toast.success(t.exportPngSuccess, {
+        description: t.exportPngSuccessDesc,
       });
     } catch (error) {
       console.error("Error exportando a PNG:", error);
-      toast.error("Error al generar la imagen");
+      toast.error(t.exportPngError);
     } finally {
       setIsExporting(false);
     }
@@ -291,7 +291,7 @@ function DashboardContent() {
     removeCity(cityToDelete.id);
 
     toast.info(t.removed, {
-      description: `${cityToDelete.name} se ha quitado del dashboard.`,
+      description: `${cityToDelete.name} ${t.removedDesc}`,
       action: {
         label: t.undo,
         onClick: () => addCity(cityToDelete),
@@ -324,7 +324,7 @@ function DashboardContent() {
             ) : (
               <Camera className="w-4 h-4 text-zinc-500 group-hover:text-[#6366F1] transition-colors" />
             )}
-            <span className="hidden sm:inline">Exportar</span>
+            <span className="hidden sm:inline">{t.exportPng}</span>
           </button>
 
           <ShareButton />

@@ -15,7 +15,7 @@ import {
 import { useCityStore } from "@/store/useCityStore";
 import { City, AVAILABLE_CITIES } from "@/data/cities";
 import { format, addHours, startOfDay, type Locale } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
+import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { generateGoogleCalendarUrl, downloadICSFile } from "@/lib/calendar";
@@ -40,7 +40,8 @@ export default function MeetingPlannerModal({
   const { t, language } = useTranslation();
   const savedCities = useCityStore((state) => state.savedCities);
 
-  const { businessStart, businessEnd } = useSettingsStore();
+  const { businessStart, businessEnd, extendedStart, extendedEnd } =
+    useSettingsStore();
 
   const allParticipants = useMemo(() => {
     return [heroCity, ...savedCities];
@@ -91,20 +92,16 @@ export default function MeetingPlannerModal({
   }, [isOpen, onClose]);
 
   const hoursColumns = useMemo(() => {
-    const start = startOfDay(baseDate);
-    return Array.from({ length: 24 }, (_, i) => addHours(start, i));
-  }, [baseDate]);
+    const heroZoned = toZonedTime(baseDate, heroCity.timezone);
+    const dayStart = startOfDay(heroZoned);
+    return Array.from({ length: 24 }, (_, i) =>
+      fromZonedTime(addHours(dayStart, i), heroCity.timezone),
+    );
+  }, [baseDate, heroCity.timezone]);
 
   const getTimeStatus = (hour: number) => {
-    // Horario central
     if (hour >= businessStart && hour < businessEnd) return "business";
-    // Horario extendido (2h antes, 3h después)
-    if (
-      (hour >= businessStart - 2 && hour < businessStart) ||
-      (hour >= businessEnd && hour < businessEnd + 3)
-    )
-      return "stretch";
-
+    if (hour >= extendedStart && hour < extendedEnd) return "stretch";
     return "night";
   };
 
@@ -154,7 +151,7 @@ export default function MeetingPlannerModal({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      toast.error("Error al copiar al portapapeles");
+      toast.error(t.copyError);
       console.error("Clipboard error:", err);
     }
   };
@@ -368,7 +365,8 @@ export default function MeetingPlannerModal({
                             <span
                               className={`font-bold text-sm sm:text-base truncate ${isLocalUser ? "text-indigo-600 dark:text-indigo-400" : "text-zinc-800 dark:text-white"}`}
                             >
-                              {displayName} {isLocalUser && "(Tú)"}
+                              {displayName}{" "}
+                              {isLocalUser && `(${t.you})`}
                             </span>
                           </div>
                           <div className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-500 truncate pl-5 sm:pl-6">
@@ -429,7 +427,10 @@ export default function MeetingPlannerModal({
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-amber-500/20 border border-amber-500/30"></div>
-                    <span>{t.extended}</span>
+                    <span>
+                      {t.extended} ({extendedStart.toString().padStart(2, "0")}{" "}
+                      - {extendedEnd.toString().padStart(2, "0")})
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"></div>

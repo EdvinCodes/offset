@@ -148,7 +148,7 @@ export default function WorldMap({
     );
 
     if (isAdded) {
-      toast.info(t.added || "Ya añadido");
+      toast.info(t.alreadyAdded);
       return;
     }
 

@@ -37,7 +37,7 @@ export default function ShareButton() {
   return (
     <button
       onClick={handleShare}
-      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-[#18181B] border border-zinc-200 dark:border-[#27272A] flex items-center justify-center text-zinc-500 dark:text-[#A1A1AA] hover:text-[#6366F1] dark:hover:text-white hover:border-[#6366F1] transition-all group shadow-sm active:scale-95"
+      className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-[#18181B] border border-zinc-200 dark:border-[#27272A] flex items-center justify-center text-zinc-500 dark:text-[#A1A1AA] hover:text-[#6366F1] dark:hover:text-white hover:border-[#6366F1] transition-all group shadow-sm active:scale-95"
       title={t.shareTitle} // 4. TÍTULO TRADUCIDO
     >
       {copied ? (

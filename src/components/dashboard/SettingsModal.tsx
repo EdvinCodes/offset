@@ -264,7 +264,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-[#09090B] border border-zinc-200 dark:border-[#27272A]">
                   <div className="flex-1">
                     <label className="text-xs text-zinc-500 block mb-1">
-                      Inicio
+                      {t.start}
                     </label>
                     <select
                       value={businessStart}
@@ -291,7 +291,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
                   <div className="flex-1">
                     <label className="text-xs text-zinc-500 block mb-1">
-                      Fin
+                      {t.end}
                     </label>
                     <select
                       value={businessEnd}
@@ -319,7 +319,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-[#09090B] border border-zinc-200 dark:border-[#27272A]">
                 <div className="flex-1">
                   <label className="text-xs text-zinc-500 block mb-1">
-                    {t.extended} — Inicio
+                    {t.extended} — {t.start}
                   </label>
                   <select
                     value={extendedStart}
@@ -346,7 +346,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
                 <div className="flex-1">
                   <label className="text-xs text-zinc-500 block mb-1">
-                    Fin
+                    {t.end}
                   </label>
                   <select
                     value={extendedEnd}
